@@ -11,85 +11,105 @@ import System.IO.Unsafe (unsafePerformIO)
 
 type CNcType = Int
 
+ncMaxName, ncMaxDims, ncMaxVars, ncMaxAttrs, ncMaxVarDims :: Int
+ncMaxName = 256
+ncMaxDims = 1024
+ncMaxVars = 8192
+ncMaxAttrs = 8192
+ncMaxVarDims = 1024
+
+
 -- Utilities.
 
-peekIntConv :: (Storable a, Integral a, Integral b) => Ptr a -> IO b
-peekIntConv = liftM fromIntegral . peek
+peekInt :: (Storable a, Integral a, Integral b) => Ptr a -> IO b
+peekInt = liftM fromIntegral . peek
+
+withIntArray :: (Storable a, Integral a) => [a] -> (Ptr CInt -> IO b) -> IO b
+withIntArray = withArray . liftM fromIntegral
+
+allocaName :: (Ptr a -> IO b) -> IO b
+allocaName = allocaBytes ncMaxName
+
+allocaVarDims :: (Ptr CInt -> IO b) -> IO b
+allocaVarDims = allocaArray ncMaxVarDims
+peekVarDims :: Ptr CInt -> IO [Int]
+peekVarDims = liftM (map fromIntegral) . peekArray ncMaxVarDims
 
 
 -- LIBRARY VERSION
 
 -- const char *nc_inq_libvers(void);
-{#fun nc_inq_libvers as ncInqLibvers1 { } -> `String' #}
-ncInqLibvers :: String
-ncInqLibvers = unsafePerformIO ncInqLibvers1
+{#fun nc_inq_libvers as nc_inq_libvers' { } -> `String' #}
+nc_inq_libvers :: String
+nc_inq_libvers = unsafePerformIO nc_inq_libvers'
 
 
 
 -- RETURN VALUES
 
 -- const char *nc_strerror(int ncerr);
-{#fun nc_strerror as ncStrError1 { `Int' } -> `String' #}
-ncStrError :: Int -> String
-ncStrError = unsafePerformIO . ncStrError1
+{#fun nc_strerror as nc_strerror' { `Int' } -> `String' #}
+nc_strerror :: Int -> String
+nc_strerror = unsafePerformIO . nc_strerror'
 
 
 
 -- FILE OPERATIONS
 
 -- int nc_create(const char *path, int cmode, int *ncidp);
-{#fun nc_create as ^ { `String', `Int',
-                       alloca- `Int' peekIntConv* } ->  `Int' #}
+{#fun nc_create { `String', `Int', alloca- `Int' peekInt* } -> `Int' #}
 
 -- int nc__create(const char *path, int cmode, size_t initialsz,
 --                size_t *chunksizehintp, int *ncidp);
+{#fun nc__create { `String', `Int', `Int',
+                   alloca- `Int' peekInt*, alloca- `Int' peekInt* } -> `Int' #}
 
 -- int nc_open(const char *path, int mode, int *ncidp);
-{#fun nc_open as ^ { `String', `Int',
-                     alloca- `Int' peekIntConv* } ->  `Int' #}
+{#fun nc_open { `String', `Int', alloca- `Int' peekInt* } -> `Int' #}
 
 -- int nc__open(const char *path, int mode,
 --              size_t *chunksizehintp, int *ncidp);
+{#fun nc__open { `String', `Int',
+                 alloca- `Int' peekInt*, alloca- `Int' peekInt* } -> `Int' #}
 
 -- int nc_redef(int ncid);
-{#fun nc_redef as ^ { `Int' } -> `Int' #}
+{#fun nc_redef { `Int' } -> `Int' #}
 
 -- int nc_enddef(int ncid);
-{#fun nc_enddef as ^ { `Int' } -> `Int' #}
+{#fun nc_enddef { `Int' } -> `Int' #}
 
 -- int nc__enddef(int ncid, size_t h_minfree, size_t v_align,
 --                size_t v_minfree, size_t r_align);
+{#fun nc__enddef { `Int', `Int', `Int', `Int', `Int' } -> `Int' #}
 
 -- int nc_sync(int ncid);
-{#fun nc_sync as ^ { `Int' } -> `Int' #}
+{#fun nc_sync { `Int' } -> `Int' #}
 
 -- int nc_close(int ncid);
-{#fun nc_close as ^ { `Int' } -> `Int' #}
+{#fun nc_close { `Int' } -> `Int' #}
 
 -- int nc_inq(int ncid, int *ndimsp, int *nvarsp, int *nattsp,
 --            int *unlimdimidp);
-{#fun nc_inq as ^ { `Int',
-                    alloca- `Int' peekIntConv*,
-                    alloca- `Int' peekIntConv*,
-                    alloca- `Int' peekIntConv*,
-                    alloca- `Int' peekIntConv* } -> `Int' #}
+{#fun nc_inq { `Int', alloca- `Int' peekInt*, alloca- `Int' peekInt*,
+               alloca- `Int' peekInt*, alloca- `Int' peekInt* } -> `Int' #}
 
 -- int nc_inq_ndims(int ncid, int *ndimsp);
-{#fun nc_inq_ndims as ^ { `Int', alloca- `Int' peekIntConv* } -> `Int' #}
+{#fun nc_inq_ndims { `Int', alloca- `Int' peekInt* } -> `Int' #}
 
 -- int nc_inq_nvars(int ncid, int *nvarsp);
-{#fun nc_inq_nvars as ^ { `Int', alloca- `Int' peekIntConv* } -> `Int' #}
+{#fun nc_inq_nvars { `Int', alloca- `Int' peekInt* } -> `Int' #}
 
 -- int nc_inq_natts(int ncid, int *nattsp);
-{#fun nc_inq_natts as ^ { `Int', alloca- `Int' peekIntConv* } -> `Int' #}
+{#fun nc_inq_natts { `Int', alloca- `Int' peekInt* } -> `Int' #}
 
 -- int nc_inq_unlimdim(int ncid, int *unlimdimidp);
-{#fun nc_inq_unlimdim as ^ { `Int', alloca- `Int' peekIntConv* } -> `Int' #}
+{#fun nc_inq_unlimdim { `Int', alloca- `Int' peekInt* } -> `Int' #}
 
 -- int nc_inq_format(int ncid, int *formatp);
-{#fun nc_inq_format as ^ { `Int', alloca- `Int' peekIntConv* } -> `Int' #}
+{#fun nc_inq_format { `Int', alloca- `Int' peekInt* } -> `Int' #}
 
 -- int nc_def_dim(int ncid, const char *name, size_t len, int *idp);
+{#fun nc_def_dim { `Int', `String', `Int', alloca- `Int' peekInt* } -> `Int' #}
 
 
 
@@ -97,9 +117,12 @@ ncStrError = unsafePerformIO . ncStrError1
 
 -- int nc_def_compound(int ncid, size_t size,
 --                     const char *name, nc_type *typeidp);
+{#fun nc_def_compound { `Int', `Int', `String',
+                        alloca- `Int' peekInt* } -> `Int' #}
 
 -- int nc_insert_compound(int ncid, nc_type xtype, const char *name,
 --                        size_t offset, nc_type field_typeid);
+{#fun nc_insert_compound { `Int', `Int', `String', `Int', `Int' } -> `Int' #}
 
 -- int nc_insert_array_compound(int ncid, nc_type xtype, const char *name,
 --                              size_t offset, nc_type field_typeid,
@@ -205,14 +228,21 @@ ncStrError = unsafePerformIO . ncStrError1
 -- DIMENSIONS
 
 -- int nc_inq_dimid(int ncid, const char *name, int *idp);
+{#fun nc_inq_dimid { `Int', `String', alloca- `Int' peekInt* } -> `Int' #}
 
 -- int nc_inq_dim(int ncid, int dimid, char *name, size_t *lenp);
+{#fun nc_inq_dim { `Int', `Int', allocaName- `String' peekCString*,
+                   alloca- `Int' peekInt* } -> `Int' #}
 
 -- int nc_inq_dimname(int ncid, int dimid, char *name);
+{#fun nc_inq_dimname { `Int', `Int',
+                       allocaName- `String' peekCString* } -> `Int' #}
 
 -- int nc_inq_dimlen(int ncid, int dimid, size_t *lenp);
+{#fun nc_inq_dimlen { `Int', `Int', alloca- `Int' peekInt* } -> `Int' #}
 
 -- int nc_rename_dim(int ncid, int dimid, const char *name);
+{#fun nc_rename_dim { `Int', `Int', `String' } -> `Int' #}
 
 
 
@@ -220,23 +250,40 @@ ncStrError = unsafePerformIO . ncStrError1
 
 -- int nc_def_var(int ncid, const char *name, nc_type xtype, int ndims,
 --                const int *dimidsp, int *varidp);
+{#fun nc_def_var { `Int', `String', `Int', `Int',
+                   withIntArray* `[Int]', alloca- `Int' peekInt* } -> `Int' #}
 
 -- int nc_inq_varid(int ncid, const char *name, int *varidp);
+{#fun nc_inq_varid { `Int', `String', alloca- `Int' peekInt* } -> `Int' #}
 
 -- int nc_inq_var(int ncid, int varid, char *name, nc_type *xtypep,
 --                int *ndimsp, int *dimidsp, int *nattsp);
+{#fun nc_inq_var { `Int', `Int',
+                   allocaName- `String' peekCString*,
+                   alloca- `Int' peekInt*,
+                   alloca- `Int' peekInt*,
+                   allocaVarDims- `[Int]' peekVarDims*,
+                   alloca- `Int' peekInt* } -> `Int' #}
 
 -- int nc_inq_varname(int ncid, int varid, char *name);
+{#fun nc_inq_varname { `Int', `Int',
+                       allocaName- `String' peekCString* } -> `Int' #}
 
 -- int nc_inq_vartype(int ncid, int varid, nc_type *xtypep);
+{#fun nc_inq_vartype { `Int', `Int', alloca- `Int' peekInt* } -> `Int' #}
 
 -- int nc_inq_varndims(int ncid, int varid, int *ndimsp);
+{#fun nc_inq_varndims { `Int', `Int', alloca- `Int' peekInt* } -> `Int' #}
 
 -- int nc_inq_vardimid(int ncid, int varid, int *dimidsp);
+{#fun nc_inq_vardimid { `Int', `Int',
+                        allocaVarDims- `[Int]' peekVarDims* } -> `Int' #}
 
 -- int nc_inq_varnatts(int ncid, int varid, int *nattsp);
+{#fun nc_inq_varnatts { `Int', `Int', alloca- `Int' peekInt* } -> `Int' #}
 
 -- int nc_rename_var(int ncid, int varid, const char *name);
+{#fun nc_rename_var { `Int', `Int', `String' } -> `Int' #}
 
 
 
@@ -272,6 +319,8 @@ ncStrError = unsafePerformIO . ncStrError1
 -- WRITING AND READING WHOLE VARIABLES
 
 -- int nc_put_var_text(int ncid, int varid, const char *op);
+-- ????
+--{#fun nc_put_var_text { `Int', `Int', `String' } -> `Int' #}
 -- int nc_put_var_uchar(int ncid, int varid, const unsigned char *op);
 -- int nc_put_var_schar(int ncid, int varid, const signed char *op);
 -- int nc_put_var_short(int ncid, int varid, const short *op);
@@ -619,23 +668,36 @@ ncStrError = unsafePerformIO . ncStrError1
 -- int nc_get_att(int ncid, int varid, const char *name, void *ip);
 
 -- int nc_inq_attname(int ncid, int varid, int attnum, char *name);
+{#fun nc_inq_attname { `Int', `Int', `Int',
+                       allocaName- `String' peekCString* } -> `Int' #}
 
 -- int nc_inq_att(int ncid, int varid, const char *name,
 --                nc_type *xtypep, size_t *lenp);
+{#fun nc_inq_att { `Int', `Int', `String',
+                   alloca- `Int' peekInt*, alloca- `Int' peekInt* } -> `Int' #}
 
 -- int nc_inq_attid(int ncid, int varid, const char *name, int *idp);
+{#fun nc_inq_attid { `Int', `Int', `String',
+                     alloca- `Int' peekInt* } -> `Int' #}
 
 -- int nc_inq_atttype(int ncid, int varid, const char *name, nc_type *xtypep);
+{#fun nc_inq_atttype { `Int', `Int', `String',
+                       alloca- `Int' peekInt* } -> `Int' #}
 
 -- int nc_inq_attlen(int ncid, int varid, const char *name, size_t *lenp);
+{#fun nc_inq_attlen { `Int', `Int', `String',
+                      alloca- `Int' peekInt* } -> `Int' #}
 
 -- int nc_copy_att(int ncid_in, int varid_in, const char *name,
 --                 int ncid_out, int varid_out);
+{#fun nc_copy_att { `Int', `Int', `String', `Int', `Int' } -> `Int' #}
 
 -- int nc_rename_att(int ncid, int varid, const char *name,
 --                   const char *newname);
+{#fun nc_rename_att { `Int', `Int', `String', `String' } -> `Int' #}
 
 -- int nc_del_att(int ncid, int varid, const char *name);
+{#fun nc_del_att { `Int', `Int', `String' } -> `Int' #}
 
 -- int nc_get_att_text(int ncid, int varid, const char *name, char *ip);
 -- int nc_get_att_uchar(int ncid, int varid, const char *name,
@@ -661,7 +723,7 @@ ncStrError = unsafePerformIO . ncStrError1
 -- VARIABLE PREFILLING
 
 -- int nc_set_fill(int ncid, int fillmode, int *old_modep);
-
+{#fun nc_set_fill { `Int', `Int', alloca- `Int' peekInt* } -> `Int' #}
 
 
 
@@ -736,4 +798,4 @@ ncStrError = unsafePerformIO . ncStrError1
 -- int nc_inq_unlimdims(int ncid, int *nunlimdimsp, int *unlimdimidsp);
 
 -- int nc_copy_var(int ncid_in, int varid, int ncid_out);
-
+{#fun nc_copy_var { `Int', `Int', `Int' } -> `Int' #}
