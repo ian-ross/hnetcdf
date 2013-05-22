@@ -19,10 +19,23 @@ Library
   build-tools:         c2hs
   extra-libraries:     netcdf
 
-Test-Suite test-raw
+Test-Suite test-raw-metadata
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
-  main-is:             test-raw.hs
+  main-is:             test-raw-metadata.hs
+  build-depends:       hnetcdf,
+                       base,
+                       test-framework,
+                       test-framework-hunit,
+                       test-framework-quickcheck,
+                       HUnit,
+                       QuickCheck
+  extra-libraries:     netcdf
+
+Test-Suite test-raw-var1
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      test
+  main-is:             test-raw-var1.hs
   build-depends:       hnetcdf,
                        base,
                        test-framework,
