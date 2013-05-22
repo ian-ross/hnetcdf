@@ -42,5 +42,6 @@ Test-Suite test-raw-var1
                        test-framework-hunit,
                        test-framework-quickcheck,
                        HUnit,
-                       QuickCheck
+                       QuickCheck,
+                       directory
   extra-libraries:     netcdf
