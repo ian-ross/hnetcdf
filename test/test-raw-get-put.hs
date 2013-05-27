@@ -31,7 +31,16 @@ tests =
         (rawGetVar infile "vi" nc_get_var_int),
       testCase "Read whole variable (short)"
         (rawGetVar infile "vs" nc_get_var_short),
-      testCase "Write whole variables" rawPutVar ]
+      testCase "Write whole variables" rawPutVar ],
+    testGroup "Array access functions"
+    [ testCase "Read array (float)"
+        (rawGetVarA infile "vf" nc_get_vara_float),
+      testCase "Read array (int)"
+        (rawGetVarA infile "vi" nc_get_vara_int),
+      testCase "Read array (short)"
+        (rawGetVarA infile "vs" nc_get_vara_short)
+--    , testCase "Write array" rawPutVarA
+    ]
   ]
 
 
@@ -267,3 +276,152 @@ gen nx ny nz = SV.generate (nx * ny * nz) $ \i ->
       iy = (i `div` nx) `mod` ny + 1
       iz = i `div` (nx * ny) + 1
   in fromIntegral $ 100 * iz + 10 * iy + ix
+
+
+--------------------------------------------------------------------------------
+--
+--  ARRAY READ/WRITE
+--
+--------------------------------------------------------------------------------
+
+rawGetVarA :: (Num a, Show a, Eq a, SV.Storable a) => FilePath -> String
+           -> (Int -> Int -> [Int] -> [Int] -> IO (Int, SV.Vector a))
+           -> Assertion
+rawGetVarA f v rdfn = do
+  (res1, ncid) <- nc_open f 0
+  assertBool ("nc_open error:" ++ nc_strerror res1) (res1 == 0)
+
+  (res2, ndims) <- nc_inq_ndims ncid
+  assertBool ("nc_inq_ndims error:" ++ nc_strerror res2) (res2 == 0)
+  assertEqual "ndims /= 3" 3 ndims
+  (res3, nvars) <- nc_inq_nvars ncid
+  assertBool ("nc_inq_nvars error:" ++ nc_strerror res3) (res3 == 0)
+  assertEqual "nvars /= 6" 6 nvars
+
+  (res4, xname, nx) <- nc_inq_dim ncid 0
+  (res5, yname, ny) <- nc_inq_dim ncid 1
+  (res6, zname, nz) <- nc_inq_dim ncid 2
+  assertBool "nc_inq_dim error!" $
+    res4 == 0 && res5 == 0 && res6 == 0 &&
+    xname == "x" && yname == "y" && zname == "z"
+
+  (res7, vvarid) <- nc_inq_varid ncid v
+  assertBool ("nc_inq_var error:" ++ nc_strerror res7) (res7 == 0)
+
+  forM_ [1..nx] $ \ix -> do
+    forM_ [1..ny] $ \iy -> do
+      let start = [0, iy-1, ix-1]
+          count = [nz, 1, 1]
+      (res, vals) <- rdfn ncid vvarid start count
+      assertBool ("nc_get_var error:" ++ nc_strerror res) (res == 0)
+      let truevals = SV.generate nz
+                     (\iz -> fromIntegral $ ix + 10 * iy + 100 * (iz+1))
+      assertBool ("1: value error: " ++ show vals ++
+                  " instead of " ++ show truevals) (vals == truevals)
+
+  forM_ [1..nx] $ \ix -> do
+    forM_ [1..nz] $ \iz -> do
+      let start = [iz-1, 0, ix-1]
+          count = [1, ny, 1]
+      (res, vals) <- rdfn ncid vvarid start count
+      assertBool ("nc_get_var error:" ++ nc_strerror res) (res == 0)
+      let truevals = SV.generate ny
+                     (\iy -> fromIntegral $ ix + 10 * (iy+1) + 100 * iz)
+      assertBool ("2: value error: " ++ show vals ++
+                  " instead of " ++ show truevals) (vals == truevals)
+
+  forM_ [1..ny] $ \iy -> do
+    forM_ [1..nz] $ \iz -> do
+      let start = [iz-1, iy-1, 0]
+          count = [1, 1, nx]
+      (res, vals) <- rdfn ncid vvarid start count
+      assertBool ("nc_get_var error:" ++ nc_strerror res) (res == 0)
+      let truevals = SV.generate nx
+                     (\ix -> fromIntegral $ (ix+1) + 10 * iy + 100 * iz)
+      assertBool ("3: value error: " ++ show vals ++
+                  " instead of " ++ show truevals) (vals == truevals)
+
+  res8 <- nc_close ncid
+  assertBool ("nc_close error:" ++ nc_strerror res8) (res8 == 0)
+
+
+rawPutVarA :: Assertion
+rawPutVarA = do
+  ex <- doesFileExist outfile
+  when ex $ removeFile outfile
+
+  (res1, ncid) <- nc_create outfile 1
+  assertBool ("nc_create error:" ++ nc_strerror res1) (res1 == 0)
+
+  let nx = 10
+      ny = 5
+      nz = 3
+
+  (res2, xdimid) <- nc_def_dim ncid "x" nx
+  (res3, ydimid) <- nc_def_dim ncid "y" ny
+  (res4, zdimid) <- nc_def_dim ncid "z" nz
+  assertBool "nc_def_dim error!" $ res2 == 0 && res3 == 0 && res4 == 0
+
+  (res5, xvarid) <- nc_def_var ncid "x" 5 1 [xdimid]
+  (res6, yvarid) <- nc_def_var ncid "y" 5 1 [ydimid]
+  (res7, zvarid) <- nc_def_var ncid "z" 5 1 [zdimid]
+  assertBool "nc_def_var error!" $ res5 == 0 && res6 == 0 && res7 == 0
+
+  (res8, vfvarid) <- nc_def_var ncid "vf" 5 3 [zdimid, ydimid, xdimid]
+  assertBool ("nc_def_var error:" ++ nc_strerror res8) (res8 == 0)
+
+  (res9, vivarid) <- nc_def_var ncid "vi" 4 3 [zdimid, ydimid, xdimid]
+  assertBool ("nc_def_var error:" ++ nc_strerror res9) (res9 == 0)
+
+  (res10, vsvarid) <- nc_def_var ncid "vs" 3 3 [zdimid, ydimid, xdimid]
+  assertBool ("nc_def_var error:" ++ nc_strerror res10) (res10 == 0)
+
+  res11 <- nc_enddef ncid
+  assertBool ("nc_enddef error:" ++ nc_strerror res11) (res11 == 0)
+
+  let xvals = SV.generate nx (fromIntegral . (+1))
+      yvals = SV.generate ny (fromIntegral . (*10) . (+1))
+      zvals = SV.generate nz (fromIntegral . (*100) . (+1))
+
+  res12 <- nc_put_var_float ncid xvarid xvals
+  assertBool ("nc_put_var_float error:" ++ nc_strerror res12) (res12 == 0)
+
+  res13 <- nc_put_var_float ncid yvarid yvals
+  assertBool ("nc_put_var_float error:" ++ nc_strerror res13) (res13 == 0)
+
+  res14 <- nc_put_var_float ncid zvarid zvals
+  assertBool ("nc_put_var_float error:" ++ nc_strerror res14) (res14 == 0)
+
+  forM_ [1..nx] $ \ix -> do
+    forM_ [1..ny] $ \iy -> do
+      let start = [0, iy-1, ix-1]
+          count = [nz, 1, 1]
+          vals = SV.generate nz
+                 (\iz -> fromIntegral $ ix + 10 * iy + 100 * (iz+1))
+      res <- nc_put_vara_float ncid vfvarid start count vals
+      assertBool ("nc_put_vara_float error:" ++ nc_strerror res) (res == 0)
+
+  forM_ [1..nx] $ \ix -> do
+    forM_ [1..nz] $ \iz -> do
+      let start = [iz-1, 0, ix-1]
+          count = [1, ny, 1]
+          vals = SV.generate ny
+                 (\iy -> fromIntegral $ ix + 10 * (iy+1) + 100 * iz)
+      res <- nc_put_vara_int ncid vivarid start count vals
+      assertBool ("nc_put_vara_int error:" ++ nc_strerror res) (res == 0)
+
+  forM_ [1..ny] $ \iy -> do
+    forM_ [1..nz] $ \iz -> do
+      let start = [iz-1, iy-1, 0]
+          count = [1, 1, nx]
+          vals = SV.generate nx
+                 (\ix -> fromIntegral $ (ix+1) + 10 * iy + 100 * iz)
+      res <- nc_put_vara_short ncid vsvarid start count vals
+      assertBool ("nc_put_vara_short error:" ++ nc_strerror res) (res == 0)
+
+  res18 <- nc_close ncid
+  assertBool ("nc_close error:" ++ nc_strerror res18) (res18 == 0)
+
+  rawGetVarA outfile "vf" nc_get_vara_float
+  rawGetVarA outfile "vi" nc_get_vara_int
+  rawGetVarA outfile "vs" nc_get_vara_short
