@@ -238,13 +238,13 @@ foreign import ccall safe "Data/NetCDF/Raw.chs.h nc_put_var_long"
   nc_put_var_long'_ :: CInt -> CInt -> Ptr CLong -> IO CInt
 
 -- int nc_put_var_float(int ncid, int varid, const float *op);
-nc_put_var_float :: Int -> Int -> SV.Vector Int -> IO Int
+nc_put_var_float :: Int -> Int -> SV.Vector Float -> IO Int
 nc_put_var_float = nc_put_var nc_put_var_float'_ realToFrac
 foreign import ccall safe "Data/NetCDF/Raw.chs.h nc_put_var_float"
   nc_put_var_float'_ :: CInt -> CInt -> Ptr CFloat -> IO CInt
 
 -- int nc_put_var_double(int ncid, int varid, const double *op);
-nc_put_var_double :: Int -> Int -> SV.Vector Int -> IO Int
+nc_put_var_double :: Int -> Int -> SV.Vector Double -> IO Int
 nc_put_var_double = nc_put_var nc_put_var_double'_ realToFrac
 foreign import ccall safe "Data/NetCDF/Raw.chs.h nc_put_var_double"
   nc_put_var_double'_ :: CInt -> CInt -> Ptr CDouble -> IO CInt

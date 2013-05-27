@@ -34,10 +34,10 @@ Test-Suite test-raw-metadata
                        QuickCheck
   extra-libraries:     netcdf
 
-Test-Suite test-raw-var1
+Test-Suite test-raw-get-put
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
-  main-is:             test-raw-var1.hs
+  main-is:             test-raw-get-put.hs
   build-depends:       hnetcdf,
                        base,
                        vector >= 0.10 && < 0.11,
