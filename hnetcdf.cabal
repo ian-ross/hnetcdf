@@ -14,6 +14,15 @@ cabal-version:       >=1.8
 Library
   exposed-modules:     Data.NetCDF
                        Data.NetCDF.Raw
+                       Data.NetCDF.Raw.Base
+                       Data.NetCDF.Raw.PutGetVar
+                       Data.NetCDF.Raw.PutGetVar1
+                       Data.NetCDF.Raw.PutGetVarA
+                       Data.NetCDF.Raw.PutGetVarS
+                       Data.NetCDF.Raw.PutGetVarM
+                       Data.NetCDF.Raw.Attributes
+                       Data.NetCDF.Raw.NetCDF4
+                       Data.NetCDF.Raw.Utils
   other-modules:       C2HS
   build-depends:       base ==4.6.*,
                        vector >= 0.10 && < 0.11
