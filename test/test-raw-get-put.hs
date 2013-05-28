@@ -1,7 +1,11 @@
 import Test.Framework (defaultMain, testGroup, Test)
 import Test.Framework.Providers.HUnit
-import Test.HUnit hiding (Test)
+import Test.Framework.Providers.QuickCheck2
+import Test.HUnit hiding (Test, assert)
+import Test.QuickCheck
+import Test.QuickCheck.Monadic
 import System.Directory
+import Data.List (zip4)
 import qualified Data.Vector.Storable as SV
 import Control.Monad
 
@@ -17,30 +21,27 @@ outfile = "test/tmp-tst-raw-get-put.nc"
 tests :: [Test]
 tests =
   [ testGroup "Single item access functions"
-    [ testCase "Read single items (float)"
-        (rawGetVar1 infile "vf" nc_get_var1_float),
-      testCase "Read single items (int)"
-        (rawGetVar1 infile "vi" nc_get_var1_int),
-      testCase "Read single items (short)"
-        (rawGetVar1 infile "vs" nc_get_var1_short),
-      testCase "Write single items" rawPutVar1 ],
+    [ testCase "Read (float)" (rawGetVar1 infile "vf" nc_get_var1_float)
+    , testCase "Read (int)"   (rawGetVar1 infile "vi" nc_get_var1_int)
+    , testCase "Read (short)" (rawGetVar1 infile "vs" nc_get_var1_short)
+    , testCase "Write" rawPutVar1 ],
     testGroup "Whole variable access functions"
-    [ testCase "Read whole variable (float)"
-        (rawGetVar infile "vf" nc_get_var_float),
-      testCase "Read whole variable (int)"
-        (rawGetVar infile "vi" nc_get_var_int),
-      testCase "Read whole variable (short)"
-        (rawGetVar infile "vs" nc_get_var_short),
-      testCase "Write whole variables" rawPutVar ],
+    [ testCase "Read (float)" (rawGetVar infile "vf" nc_get_var_float)
+    , testCase "Read (int)"   (rawGetVar infile "vi" nc_get_var_int)
+    , testCase "Read (short)" (rawGetVar infile "vs" nc_get_var_short)
+    , testCase "Write" rawPutVar ],
     testGroup "Array access functions"
-    [ testCase "Read array (float)"
-        (rawGetVarA infile "vf" nc_get_vara_float),
-      testCase "Read array (int)"
-        (rawGetVarA infile "vi" nc_get_vara_int),
-      testCase "Read array (short)"
-        (rawGetVarA infile "vs" nc_get_vara_short)
---    , testCase "Write array" rawPutVarA
-    ]
+    [ testCase "Read (float)" (rawGetVarA infile "vf" nc_get_vara_float)
+    , testCase "Read (int)"   (rawGetVarA infile "vi" nc_get_vara_int)
+    , testCase "Read (short)" (rawGetVarA infile "vs" nc_get_vara_short)
+    , testCase "Write" rawPutVarA ],
+    testGroup "Stride access functions"
+    [ testProperty "Read (float)"
+        (monadicIO $ rawGetVarS infile "vf" nc_get_vars_float)
+    , testProperty "Read (int)"
+        (monadicIO $ rawGetVarS infile "vi" nc_get_vars_int)
+    , testProperty "Read (short)"
+        (monadicIO $ rawGetVarS infile "vs" nc_get_vars_short) ]
   ]
 
 
@@ -425,3 +426,39 @@ rawPutVarA = do
   rawGetVarA outfile "vf" nc_get_vara_float
   rawGetVarA outfile "vi" nc_get_vara_int
   rawGetVarA outfile "vs" nc_get_vara_short
+
+
+--------------------------------------------------------------------------------
+--
+--  STRIDED READ/WRITE
+--
+--------------------------------------------------------------------------------
+
+rawGetVarS :: (Num a, Show a, Eq a, SV.Storable a) => FilePath -> String
+           -> (Int -> Int -> [Int] -> [Int] -> [Int] -> IO (Int, SV.Vector a))
+           -> PropertyM IO ()
+rawGetVarS f v rdfn = do
+  [nx, ny, nz] <- run $ do
+    (_, ncid) <- nc_open f 0
+    (_, _, nx) <- nc_inq_dim ncid 0
+    (_, _, ny) <- nc_inq_dim ncid 1
+    (_, _, nz) <- nc_inq_dim ncid 2
+    _ <- nc_close ncid
+    return [nx, ny, nz]
+  start <- mapM pick $ map choose [(0, nz - 1), (0, ny - 1), (0, nx - 1)]
+  let left = zipWith (-) [nz, ny, nx] start
+  stride <- mapM pick $ map choose $ zip (repeat 1) left
+  count <- mapM pick $ map choose $ zip (repeat 1) (zipWith div left stride)
+  let [izs, iys, ixs] =
+        map (\(s, c, str, n) -> [i | i <- take c [s, s + str..], i < n]) $
+        zip4 start count stride [nz, ny, nx]
+      vs = [fromIntegral $ 100 * (iz + 1) + 10 * (iy + 1) + (ix + 1) |
+            iz <- izs, iy <- iys, ix <- ixs]
+      truevals = SV.fromList vs
+  vals <- run $ do
+    (_, ncid) <- nc_open f 0
+    (_, vvarid) <- nc_inq_varid ncid v
+    (_, vals) <- rdfn ncid vvarid start count stride
+    _ <- nc_close ncid
+    return vals
+  assert $ vals == truevals
