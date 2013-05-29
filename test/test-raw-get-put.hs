@@ -9,8 +9,6 @@ import Data.List (zip4)
 import qualified Data.Vector.Storable as SV
 import Control.Monad
 
-import System.Directory
-
 import Data.NetCDF.Raw
 
 main :: IO ()
@@ -56,9 +54,6 @@ tests =
 rawGetVar1 :: (Num a, Show a, Eq a) => FilePath -> String
            -> (Int -> Int -> [Int] -> IO (Int, a)) -> Assertion
 rawGetVar1 f v rdfn = do
-  dir <- getCurrentDirectory
-  putStrLn $ "pwd=" ++ dir
-
   (res1, ncid) <- nc_open f 0
   assertBool ("nc_open error:" ++ nc_strerror res1) (res1 == 0)
 
