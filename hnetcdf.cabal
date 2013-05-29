@@ -24,7 +24,7 @@ Library
                        Data.NetCDF.Raw.NetCDF4
                        Data.NetCDF.Raw.Utils
                        C2HS
-  build-depends:       base ==4.6.*,
+  build-depends:       base < 5,
                        vector >= 0.10 && < 0.11
   build-tools:         c2hs
   extra-libraries:     netcdf
