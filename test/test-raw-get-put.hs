@@ -93,7 +93,7 @@ rawPutVar1 = do
   ex <- doesFileExist outfile
   when ex $ removeFile outfile
 
-  (res1, ncid) <- nc_create outfile 1
+  (res1, ncid) <- nc_create outfile 0
   assertBool ("nc_create error:" ++ nc_strerror res1) (res1 == 0)
 
   (res2, xdimid) <- nc_def_dim ncid "x" 10
@@ -209,7 +209,7 @@ rawPutVar = do
   ex <- doesFileExist outfile
   when ex $ removeFile outfile
 
-  (res1, ncid) <- nc_create outfile 1
+  (res1, ncid) <- nc_create outfile 0
   assertBool ("nc_create error:" ++ nc_strerror res1) (res1 == 0)
 
   let nx = 10
@@ -351,7 +351,7 @@ rawPutVarA = do
   ex <- doesFileExist outfile
   when ex $ removeFile outfile
 
-  (res1, ncid) <- nc_create outfile 1
+  (res1, ncid) <- nc_create outfile 0
   assertBool ("nc_create error:" ++ nc_strerror res1) (res1 == 0)
 
   let nx = 10
