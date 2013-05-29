@@ -38,7 +38,7 @@ Test-Suite test-raw-metadata
                        vector >= 0.10 && < 0.11,
                        test-framework,
                        test-framework-hunit,
-                       test-framework-quickcheck2,
+                       test-framework-quickcheck2 >= 0.3,
                        HUnit,
                        QuickCheck
   extra-libraries:     netcdf
@@ -52,7 +52,7 @@ Test-Suite test-raw-get-put
                        vector >= 0.10 && < 0.11,
                        test-framework,
                        test-framework-hunit,
-                       test-framework-quickcheck2,
+                       test-framework-quickcheck2 >= 0.3,
                        HUnit,
                        QuickCheck,
                        directory
