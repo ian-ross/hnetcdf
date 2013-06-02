@@ -5,14 +5,31 @@ dimensions:
   z = 3 ;
 variables:
   float x(x) ;
-    x:units = "m" ;
+    x:long_name = "longitude" ;
+    x:units = "degrees_east" ;
+    x:missing_value = -99999.f ;
   float y(y) ;
-    y:units = "m" ;
+    y:long_name = "latitude" ;
+    y:units = "degrees_north" ;
+    y:missing_value = -99999.f ;
   float z(z) ;
     z:units = "m" ;
   float vf(z, y, x) ;
+    vf:long_name = "Original Bathymetry" ;
+    vf:units = "m" ;
+    vf:missing_value = -99999.f ;
   int vi(z, y, x) ;
+    vi:long_name = "Depth Mask (Model levels)" ;
+    vi:units = "" ;
+    vi:missing_value = -99999 ;
   short vs(z, y, x) ;
+    vs:long_name = "Depth Mask (Model levels)" ;
+    vs:units = "" ;
+    vs:missing_value = -9999s ;
+
+  :title = "Produced using Emacs by IR" ;
+  :history = "Fri May 31 20:05:38 2013: edited by hand" ;
+  :custom = "4.2.0" ;
 
 data:
   x = 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ;
