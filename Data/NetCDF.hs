@@ -1,3 +1,5 @@
+{-# LANGUAGE TypeFamilies, FlexibleInstances #-}
+
 module Data.NetCDF
        ( module Data.NetCDF.Raw
        , module Data.NetCDF.Types
@@ -17,15 +19,11 @@ import System.IO (IOMode (..))
 
 openFile :: FilePath -> IOMode -> IO NcInfo
 openFile p m = do
-  (st1, ncid) <- nc_open p (ncIOMode m)
-  checkStatus "openFile" st1 p
-  (st2, ndims) <- nc_inq_ndims ncid
-  checkStatus "openFile" st2 p
-  (st3, unlim) <- nc_inq_unlimdim ncid
-  checkStatus "openFile" st3 p
+  ncid <- chk "openFile" p $ nc_open p (ncIOMode m)
+  ndims <- chk "openFile" p $ nc_inq_ndims ncid
+  unlim <- chk "openFile" p $ nc_inq_unlimdim ncid
   dims <- forM [0..ndims-1] $ \dimid -> do
-    (st4, name, len) <- nc_inq_dim ncid dimid
-    checkStatus "openFile" st4 p
+    (name, len) <- chk "openFile" p $ nc_inq_dim ncid dimid
     return $ NcDim name len (dimid == unlim)
   return $ NcInfo dims [] ncid
 
@@ -36,6 +34,33 @@ withFile :: FilePath -> IOMode -> (NcInfo -> IO r) -> IO r
 withFile p m = bracket (openFile p m) closeFile
 
 
+-- | Utility class to make dealing with status return from foreign
+-- NetCDF functions a little easier.
+--
+class Checkable a where
+  type OutType a :: *
+  chk :: String -> FilePath -> IO a -> IO (OutType a)
+
+instance Checkable (Int, a) where
+  type OutType (Int, a) = a
+  chk f p a = do
+    (st, v) <- a
+    checkStatus f st p
+    return v
+
+instance Checkable (Int, a, b) where
+  type OutType (Int, a, b) = (a, b)
+  chk f p a = do
+    (st, v1, v2) <- a
+    checkStatus f st p
+    return (v1, v2)
+
+instance Checkable (Int, a, b, c) where
+  type OutType (Int, a, b, c) = (a, b, c)
+  chk f p a = do
+    (st, v1, v2, v3) <- a
+    checkStatus f st p
+    return (v1, v2, v3)
 
 checkStatus :: String -> Int -> FilePath -> IO ()
 checkStatus _ 0 _ = return ()
