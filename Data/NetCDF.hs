@@ -1,28 +1,42 @@
 module Data.NetCDF
-       ( module Data.NetCDF.Raw ) where
+       ( module Data.NetCDF.Raw
+       , module Data.NetCDF.Types
+       , module Data.NetCDF.Metadata
+       , IOMode (..)
+       , openFile, closeFile, withFile ) where
 
 import Data.NetCDF.Raw
+import Data.NetCDF.Storable
+import Data.NetCDF.Types
+import Data.NetCDF.Metadata
 
--- | The NetCDF external data types.
---
-data NcType = NcNAT        -- ^ Not a type
-            | NcByte       -- ^ Signed 1 byte integer
-            | NcChar       -- ^ ISO/ASCII character
-            | NcShort      -- ^ Signed 2 byte integer
-            | NcInt        -- ^ Signed 4 byte integer
-            | NcFloat      -- ^ Single precision floating point number
-            | NcDouble     -- ^ Double precision floating point number
-            | NcUByte      -- ^ Unsigned 1 byte int
-            | NcUShort     -- ^ Unsigned 2-byte int
-            | NcUInt       -- ^ Unsigned 4-byte int
-            | NcInt64      -- ^ Signed 8-byte int
-            | NcUInt64     -- ^ Unsigned 8-byte int
-            | NcString     -- ^ String
-            | NcVlen       -- ^ Vlen types
-            | NcOpaque     -- ^ Opaque types
-            | NcEnum       -- ^ Enum types
-            | NcCompound   -- ^ Compound types
-            deriving (Eq, Show, Enum)
+import Control.Exception (bracket, throw)
+import Control.Monad (forM)
+import System.FilePath
+import System.IO (IOMode (..))
 
-newtype NcId = NcId Int
-newtype NcError = NcError Int
+openFile :: FilePath -> IOMode -> IO NcInfo
+openFile p m = do
+  (st1, ncid) <- nc_open p (ncIOMode m)
+  checkStatus "openFile" st1 p
+  (st2, ndims) <- nc_inq_ndims ncid
+  checkStatus "openFile" st2 p
+  (st3, unlim) <- nc_inq_unlimdim ncid
+  checkStatus "openFile" st3 p
+  dims <- forM [0..ndims-1] $ \dimid -> do
+    (st4, name, len) <- nc_inq_dim ncid dimid
+    checkStatus "openFile" st4 p
+    return $ NcDim name len (dimid == unlim)
+  return $ NcInfo dims [] ncid
+
+closeFile :: NcInfo -> IO ()
+closeFile i = return ()
+
+withFile :: FilePath -> IOMode -> (NcInfo -> IO r) -> IO r
+withFile p m = bracket (openFile p m) closeFile
+
+
+
+checkStatus :: String -> Int -> FilePath -> IO ()
+checkStatus _ 0 _ = return ()
+checkStatus fn st p = throw (NcError fn st (nc_strerror st) p)
