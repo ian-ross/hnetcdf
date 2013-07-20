@@ -27,8 +27,10 @@ Library
                        C2HS
   build-depends:       base          < 5,
                        filepath,
-                       vector        >= 0.10 && < 0.11,
-                       repa          >= 3.2 && < 3.3
+                       vector,
+--        >= 0.10 && < 0.11,
+                       repa
+--          >= 3.2 && < 3.3
   build-tools:         c2hs
   extra-libraries:     netcdf
 
@@ -38,8 +40,10 @@ Test-Suite test-raw-metadata
   main-is:             test-raw-metadata.hs
   build-depends:       hnetcdf,
                        base,
-                       vector >= 0.10 && < 0.11,
-                       repa >= 3.2 && < 3.3,
+                       vector,
+-- >= 0.10 && < 0.11,
+                       repa,
+-- >= 3.2 && < 3.3,
                        test-framework,
                        test-framework-hunit,
                        test-framework-quickcheck2 >= 0.3,
@@ -69,8 +73,10 @@ Test-Suite test-raw-attributes
   main-is:             test-raw-attributes.hs
   build-depends:       hnetcdf,
                        base,
-                       vector >= 0.10 && < 0.11,
-                       repa >= 3.2 && < 3.3,
+                       vector,
+-- >= 0.10 && < 0.11,
+                       repa,
+-- >= 3.2 && < 3.3,
                        test-framework,
                        test-framework-hunit,
                        test-framework-quickcheck2 >= 0.3,
