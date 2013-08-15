@@ -4,9 +4,14 @@ module Data.NetCDF.Raw.PutGet where
 
 import Foreign.C
 import Foreign.Ptr
+import C2HS
+
 
 -- WRITING AND READING SINGLE DATA VALUES
 
+nc_put_var1_htext :: CInt -> CInt -> Ptr CULong -> String -> IO CInt
+nc_put_var1_htext ncid varid idx s =
+  withCString s $ nc_put_var1_text'_ ncid varid idx
 foreign import ccall safe "netcdf.h nc_put_var1_text"
   nc_put_var1_text'_ :: CInt -> CInt -> Ptr CULong -> Ptr CChar -> IO CInt
 foreign import ccall safe "netcdf.h nc_put_var1_uchar"
@@ -33,6 +38,12 @@ foreign import ccall safe "netcdf.h nc_put_var1_ulonglong"
   nc_put_var1_ulonglong'_ :: CInt -> CInt -> Ptr CULong
                           -> Ptr CULLong -> IO CInt
 
+nc_get_var1_htext :: CInt -> CInt -> Ptr CULong -> IO (CInt, String)
+nc_get_var1_htext ncid varid idx =
+  allocaArray 1 $ \sp -> do
+    res <- nc_get_var1_text'_ ncid varid idx sp
+    s <- peekCString sp
+    return (res, s)
 foreign import ccall safe "netcdf.h nc_get_var1_text"
   nc_get_var1_text'_ :: CInt -> CInt -> Ptr CULong -> Ptr CChar -> IO CInt
 foreign import ccall safe "netcdf.h nc_get_var1_uchar"
@@ -62,6 +73,8 @@ foreign import ccall safe "netcdf.h nc_get_var1_ulonglong"
 
 -- WRITING AND READING WHOLE VARIABLES
 
+nc_put_var_htext :: CInt -> CInt -> String -> IO CInt
+nc_put_var_htext ncid varid s = withCString s $ nc_put_var_text'_ ncid varid
 foreign import ccall safe "netcdf.h nc_put_var_text"
   nc_put_var_text'_ :: CInt -> CInt -> Ptr CChar -> IO CInt
 foreign import ccall safe "netcdf.h nc_put_var_uchar"
@@ -87,6 +100,12 @@ foreign import ccall safe "netcdf.h nc_put_var_longlong"
 foreign import ccall safe "netcdf.h nc_put_var_ulonglong"
   nc_put_var_ulonglong'_ :: CInt -> CInt -> Ptr CULLong -> IO CInt
 
+nc_get_var_htext :: CInt -> CInt -> Int -> IO (CInt, String)
+nc_get_var_htext ncid varid len =
+  allocaArray len $ \sp -> do
+    res <- nc_get_var_text'_ ncid varid sp
+    s <- peekCString sp
+    return (res, s)
 foreign import ccall safe "netcdf.h nc_get_var_text"
   nc_get_var_text'_ :: CInt -> CInt -> Ptr CChar -> IO CInt
 foreign import ccall safe "netcdf.h nc_get_var_uchar"
@@ -152,6 +171,13 @@ foreign import ccall safe "netcdf.h nc_put_vara_ulonglong"
   nc_put_vara_ulonglong'_ :: CInt -> CInt -> Ptr CULong -> Ptr CULong
                       -> Ptr CULLong -> IO CInt
 
+-- nc_get_vara_htext :: CInt -> CInt -> Ptr CULong -> Ptr CULong
+--                   -> IO (CInt, String)
+-- nc_get_vara_htext ncid varid start count =
+--   allocaArray (product count) $ \sp -> do
+--     res <- nc_get_vara_text'_ ncid varid start count sp
+--     s <- peekCString sp
+--     return (res, s)
 foreign import ccall safe "netcdf.h nc_get_vara_text"
   nc_get_vara_text'_ :: CInt -> CInt -> Ptr CULong -> Ptr CULong
                      -> Ptr CChar -> IO CInt

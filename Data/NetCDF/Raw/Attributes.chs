@@ -171,76 +171,78 @@ nc_get_att cfn conv nc var name cnt = do
 
 -- int nc_get_att_text(int ncid, int varid, const char *name, char *ip);
 nc_get_att_text :: Int -> Int -> String -> Int -> IO (Int, String)
-nc_get_att_text = nc_get_att nc_get_att_text'_ (chr . fromIntegral)
+nc_get_att_text ncid var name ip = do
+  (s, str) <- nc_get_att nc_get_att_text'_ (chr . fromIntegral) ncid var name ip
+  return (s, takeWhile (/='\NUL') str)
 foreign import ccall safe "Data/NetCDF/Raw.chs.h nc_get_att_text"
   nc_get_att_text'_ :: CInt -> CInt -> CString -> Ptr CChar -> IO CInt
 
 -- int nc_get_att_uchar(int ncid, int varid, const char *name,
 --                      unsigned char *ip);
-nc_get_att_uchar :: Int -> Int -> String -> Int -> IO (Int, [Word8])
+nc_get_att_uchar :: Int -> Int -> String -> Int -> IO (Int, [CChar])
 nc_get_att_uchar = nc_get_att nc_get_att_uchar'_ fromIntegral
 foreign import ccall safe "Data/NetCDF/Raw.chs.h nc_get_att_uchar"
   nc_get_att_uchar'_ :: CInt -> CInt -> CString -> Ptr CUChar -> IO CInt
 
 -- int nc_get_att_schar(int ncid, int varid, const char *name, signed char *ip);
-nc_get_att_schar :: Int -> Int -> String -> Int -> IO (Int, [Word8])
+nc_get_att_schar :: Int -> Int -> String -> Int -> IO (Int, [CSChar])
 nc_get_att_schar = nc_get_att nc_get_att_schar'_ fromIntegral
 foreign import ccall safe "Data/NetCDF/Raw.chs.h nc_get_att_schar"
   nc_get_att_schar'_ :: CInt -> CInt -> CString -> Ptr CChar -> IO CInt
 
 -- int nc_get_att_short(int ncid, int varid, const char *name, short *ip);
-nc_get_att_short :: Int -> Int -> String -> Int -> IO (Int, [Int])
+nc_get_att_short :: Int -> Int -> String -> Int -> IO (Int, [CShort])
 nc_get_att_short = nc_get_att nc_get_att_short'_ fromIntegral
 foreign import ccall safe "Data/NetCDF/Raw.chs.h nc_get_att_short"
   nc_get_att_short'_ :: CInt -> CInt -> CString -> Ptr CShort -> IO CInt
 
 -- int nc_get_att_int(int ncid, int varid, const char *name, int *ip);
-nc_get_att_int :: Int -> Int -> String -> Int -> IO (Int, [Int])
+nc_get_att_int :: Int -> Int -> String -> Int -> IO (Int, [CInt])
 nc_get_att_int = nc_get_att nc_get_att_int'_ fromIntegral
 foreign import ccall safe "Data/NetCDF/Raw.chs.h nc_get_att_int"
   nc_get_att_int'_ :: CInt -> CInt -> CString -> Ptr CInt -> IO CInt
 
 -- int nc_get_att_long(int ncid, int varid, const char *name, long *ip);
-nc_get_att_long :: Int -> Int -> String -> Int -> IO (Int, [Int])
+nc_get_att_long :: Int -> Int -> String -> Int -> IO (Int, [CLong])
 nc_get_att_long = nc_get_att nc_get_att_long'_ fromIntegral
 foreign import ccall safe "Data/NetCDF/Raw.chs.h nc_get_att_long"
   nc_get_att_long'_ :: CInt -> CInt -> CString -> Ptr CLong -> IO CInt
 
 -- int nc_get_att_float(int ncid, int varid, const char *name, float *ip);
-nc_get_att_float :: Int -> Int -> String -> Int -> IO (Int, [Float])
+nc_get_att_float :: Int -> Int -> String -> Int -> IO (Int, [CFloat])
 nc_get_att_float = nc_get_att nc_get_att_float'_ realToFrac
 foreign import ccall safe "Data/NetCDF/Raw.chs.h nc_get_att_float"
   nc_get_att_float'_ :: CInt -> CInt -> CString -> Ptr CFloat -> IO CInt
 
 -- int nc_get_att_double(int ncid, int varid, const char *name, double *ip);
-nc_get_att_double :: Int -> Int -> String -> Int -> IO (Int, [Double])
+nc_get_att_double :: Int -> Int -> String -> Int -> IO (Int, [CDouble])
 nc_get_att_double = nc_get_att nc_get_att_double'_ realToFrac
 foreign import ccall safe "Data/NetCDF/Raw.chs.h nc_get_att_double"
   nc_get_att_double'_ :: CInt -> CInt -> CString -> Ptr CDouble -> IO CInt
 
 -- int nc_get_att_ushort(int ncid, int varid, const char *name,
 --                       unsigned short *ip);
-nc_get_att_ushort :: Int -> Int -> String -> Int -> IO (Int, [Int])
+nc_get_att_ushort :: Int -> Int -> String -> Int -> IO (Int, [CUShort])
 nc_get_att_ushort = nc_get_att nc_get_att_ushort'_ fromIntegral
 foreign import ccall safe "Data/NetCDF/Raw.chs.h nc_get_att_ushort"
   nc_get_att_ushort'_ :: CInt -> CInt -> CString -> Ptr CUShort -> IO CInt
 
 -- int nc_get_att_uint(int ncid, int varid, const char *name, unsigned int *ip);
-nc_get_att_uint :: Int -> Int -> String -> Int -> IO (Int, [Int])
+nc_get_att_uint :: Int -> Int -> String -> Int -> IO (Int, [CUInt])
 nc_get_att_uint = nc_get_att nc_get_att_uint'_ fromIntegral
 foreign import ccall safe "Data/NetCDF/Raw.chs.h nc_get_att_uint"
   nc_get_att_uint'_ :: CInt -> CInt -> CString -> Ptr CUInt -> IO CInt
 
 -- int nc_get_att_longlong(int ncid, int varid, const char *name,
 --                         long long *ip);
-nc_get_att_longlong :: Int -> Int -> String -> Int -> IO (Int, [Int])
+nc_get_att_longlong :: Int -> Int -> String -> Int -> IO (Int, [CLLong])
 nc_get_att_longlong = nc_get_att nc_get_att_longlong'_ fromIntegral
 foreign import ccall safe "Data/NetCDF/Raw.chs.h nc_get_att_longlong"
   nc_get_att_longlong'_ :: CInt -> CInt -> CString -> Ptr CLLong -> IO CInt
 
 -- int nc_get_att_ulonglong(int ncid, int varid, const char *name,
 --                          unsigned long long *ip);
-nc_get_att_ulonglong :: Int -> Int -> String -> Int -> IO (Int, [Int])
+nc_get_att_ulonglong :: Int -> Int -> String -> Int -> IO (Int, [CULLong])
 nc_get_att_ulonglong = nc_get_att nc_get_att_ulonglong'_ fromIntegral
 foreign import ccall safe "Data/NetCDF/Raw.chs.h nc_get_att_ulonglong"
   nc_get_att_ulonglong'_ :: CInt -> CInt -> CString -> Ptr CULLong -> IO CInt

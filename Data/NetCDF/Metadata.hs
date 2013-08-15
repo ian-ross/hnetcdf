@@ -7,7 +7,6 @@ module Data.NetCDF.Metadata
        , NcInfo (..) ) where
 
 import Data.NetCDF.Types
-import Data.NetCDF.Storable
 
 
 -- | Information about a dimension: name, number of entries and
@@ -16,8 +15,9 @@ import Data.NetCDF.Storable
 data NcDim = NcDim String Int Bool
            deriving Show
 
-data NcAttr = forall a. NcStorable a => NcAttr String a
+data NcAttr = forall a. Show a => NcAttr String [a]
 
+deriving instance Show NcAttr
 
 -- | Information about a variable: name, type, dimensions and
 -- attributes.
@@ -31,7 +31,7 @@ data NcInfo = NcInfo { ncDims :: [NcDim]
                        -- ^ Dimensions defined in file.
                      , ncVars :: [NcVar]
                        -- ^ Variables defined in file.
---                     , ncAttrs :: [NcAttr]
+                     , ncAttrs :: [NcAttr]
                        -- ^ Global attributes defined in file.
                      , ncId :: NcId
                        -- ^ Low-level file access ID.

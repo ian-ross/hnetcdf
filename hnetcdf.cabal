@@ -13,10 +13,11 @@ cabal-version:       >=1.8
 
 Library
   exposed-modules:     Data.NetCDF
+                       Data.NetCDF.Metadata
                        Data.NetCDF.Storable
                        Data.NetCDF.Store
                        Data.NetCDF.Types
-                       Data.NetCDF.Metadata
+                       Data.NetCDF.Utils
                        Data.NetCDF.Raw
                        Data.NetCDF.Raw.Base
                        Data.NetCDF.Raw.PutGet
@@ -26,11 +27,13 @@ Library
                        Data.NetCDF.Raw.Utils
                        C2HS
   build-depends:       base          < 5,
+                       either,
                        filepath,
                        vector,
 --        >= 0.10 && < 0.11,
-                       repa
+                       repa,
 --          >= 3.2 && < 3.3
+                       transformers
   build-tools:         c2hs
   extra-libraries:     netcdf
 
