@@ -22,7 +22,7 @@ deriving instance Show NcAttr
 -- | Information about a variable: name, type, dimensions and
 -- attributes.
 --
-data NcVar = NcVar String NcType [NcDim]
+data NcVar = NcVar String NcType [NcDim] [NcAttr]
            deriving Show
 
 -- | Metadata information for a whole NetCDF file.

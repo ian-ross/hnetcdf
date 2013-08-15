@@ -15,8 +15,10 @@ import Data.NetCDF.Utils
 import Control.Applicative ((<$>))
 import Control.Exception (bracket)
 import Control.Monad (forM, void)
+import Control.Monad.IO.Class
 import Control.Monad.Trans.Reader
 import Control.Monad.Trans.Either
+import Data.List
 import Foreign.C
 import System.IO (IOMode (..))
 
@@ -26,7 +28,7 @@ openFile p m = runEitherT $ runReaderT go ("openFile", p) where
   go :: Access NcInfo
   go = do
     ncid <- chk $ nc_open p (ncIOMode m)
-    (ndims, _, nattrs, unlim) <- chk $ nc_inq ncid
+    (ndims, nvars, nattrs, unlim) <- chk $ nc_inq ncid
     dims <- forM [0..ndims-1] $ \dimid -> do
       (name, len) <- chk $ nc_inq_dim ncid dimid
       return $ NcDim name len (dimid == unlim)
@@ -35,7 +37,16 @@ openFile p m = runEitherT $ runReaderT go ("openFile", p) where
       (itype, len) <- chk $ nc_inq_att ncid ncGlobal n
       a <- readAttr ncid ncGlobal n (toEnum itype) len
       return a
-    return $ NcInfo dims [] attrs ncid
+    vars <- forM [0..nvars-1] $ \varid -> do
+      (n, itype, nvdims, vdimids, nvatts) <- chk $ nc_inq_var ncid varid
+      let vdims = map (dims !!) $ take nvdims vdimids
+      vattrs <- forM [0..nvatts-1] $ \vattid -> do
+        vn <- chk $ nc_inq_attname ncid varid vattid
+        (aitype, alen) <- chk $ nc_inq_att ncid varid vn
+        a <- readAttr ncid varid vn (toEnum aitype) alen
+        return a
+      return $ NcVar n (toEnum itype) vdims vattrs
+    return $ NcInfo dims vars attrs ncid
 
 -- | Close a NetCDF file.
 closeFile :: NcInfo -> IO ()
