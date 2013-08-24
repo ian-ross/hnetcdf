@@ -27,6 +27,16 @@ put_var1 nc var idxs v = do
       res <- ffi_put_var1 ncid varid idxsp iv
       return $ fromIntegral res
 
+get_var1 :: NcStorable a => Int -> Int -> [Int] -> IO (Int, a)
+get_var1 nc var idxs = do
+  let ncid = fromIntegral nc
+      varid = fromIntegral var
+  alloca $ \iv -> do
+    withSizeArray idxs $ \idxsp -> do
+      res <- ffi_get_var1 ncid varid idxsp iv
+      v <- peek iv
+      return $ (fromIntegral res, v)
+
 put_vara :: (NcStorable a, NcStore s) =>
             Int -> Int -> [Int] -> [Int] -> s a -> IO Int
 put_vara nc var start count v = do

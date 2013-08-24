@@ -27,6 +27,7 @@ Library
                        Data.NetCDF.Raw.Utils
                        C2HS
   build-depends:       base          < 5,
+                       containers    >= 0.5.0.0 && < 0.6,
                        either,
                        filepath,
                        vector,
@@ -43,6 +44,7 @@ Test-Suite test-raw-metadata
   main-is:             test-raw-metadata.hs
   build-depends:       hnetcdf,
                        base,
+                       containers    >= 0.5.0.0 && < 0.6,
                        vector,
 -- >= 0.10 && < 0.11,
                        repa,
@@ -89,3 +91,22 @@ Test-Suite test-raw-attributes
                        QuickCheck,
                        directory
   extra-libraries:     netcdf
+
+Test-Suite test-get
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      test
+  main-is:             test-get.hs
+  build-depends:       hnetcdf,
+                       base,
+                       vector,
+-- >= 0.10 && < 0.11,
+                       repa,
+-- >= 3.2 && < 3.3,
+                       test-framework,
+                       test-framework-hunit,
+                       test-framework-quickcheck2 >= 0.3,
+                       HUnit,
+                       QuickCheck,
+                       directory
+  extra-libraries:     netcdf
+

@@ -5,11 +5,13 @@ module Data.NetCDF
        , module Data.NetCDF.Types
        , module Data.NetCDF.Metadata
        , IOMode (..)
-       , openFile, closeFile, withFile ) where
+       , openFile, closeFile, withFile
+       , get1 ) where
 
 import Data.NetCDF.Raw
 import Data.NetCDF.Types
 import Data.NetCDF.Metadata
+import Data.NetCDF.Storable
 import Data.NetCDF.Utils
 
 import Control.Applicative ((<$>))
@@ -19,15 +21,16 @@ import Control.Monad.IO.Class
 import Control.Monad.Trans.Reader
 import Control.Monad.Trans.Either
 import Data.List
+import qualified Data.Map as M
 import Foreign.C
 import System.IO (IOMode (..))
 
 -- | Open a NetCDF file and read all metadata.
 openFile :: FilePath -> IOMode -> IO (Either NcError NcInfo)
-openFile p m = runEitherT $ runReaderT go ("openFile", p) where
+openFile p mode = runEitherT $ runReaderT go ("openFile", p) where
   go :: Access NcInfo
   go = do
-    ncid <- chk $ nc_open p (ncIOMode m)
+    ncid <- chk $ nc_open p (ncIOMode mode)
     (ndims, nvars, nattrs, unlim) <- chk $ nc_inq ncid
     dims <- forM [0..ndims-1] $ \dimid -> do
       (name, len) <- chk $ nc_inq_dim ncid dimid
@@ -45,12 +48,17 @@ openFile p m = runEitherT $ runReaderT go ("openFile", p) where
         (aitype, alen) <- chk $ nc_inq_att ncid varid vn
         a <- readAttr ncid varid vn (toEnum aitype) alen
         return a
-      return $ NcVar n (toEnum itype) vdims vattrs
-    return $ NcInfo dims vars attrs ncid
+      let vattmap = foldl (\m a -> M.insert (ncAttrName a) a m) M.empty vattrs
+      return $ NcVar n (toEnum itype) vdims vattmap
+    let dimmap = foldl (\m d -> M.insert (ncDimName d) d m) M.empty dims
+        attmap = foldl (\m a -> M.insert (ncAttrName a) a m) M.empty attrs
+        varmap = foldl (\m v -> M.insert (ncVarName v) v m) M.empty vars
+        varidmap = M.fromList $ zip (map ncVarName vars) [0..]
+    return $ NcInfo p dimmap varmap attmap ncid varidmap
 
 -- | Close a NetCDF file.
 closeFile :: NcInfo -> IO ()
-closeFile (NcInfo _ _ _ ncid) = void $ nc_close ncid
+closeFile (NcInfo _ _ _ _ ncid _) = void $ nc_close ncid
 
 -- | Bracket file use: a little different from the standard 'bracket'
 -- function because of error handling.
@@ -79,3 +87,12 @@ readAttr _ _ n _ _ = return $ NcAttr n ([0] :: [CInt])
 readAttr' :: Show a => Int -> Int -> String -> Int
           -> (Int -> Int -> String -> Int -> IO (Int, [a])) -> Access NcAttr
 readAttr' nc var n l rf = NcAttr n <$> (chk $ rf nc var n l)
+
+
+get1 :: NcStorable a => NcInfo -> NcVar -> [Int] -> IO (Either NcError a)
+get1 nc var idxs = runEitherT $ flip runReaderT ("get1", ncName nc) $ do
+    let ncid = ncId nc
+        vid = (ncVarIds nc) M.! (ncVarName var)
+    v <- chk $ get_var1 ncid vid idxs
+    return v
+
