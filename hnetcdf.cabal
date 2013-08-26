@@ -25,7 +25,6 @@ Library
                        Data.NetCDF.Raw.Attributes
                        Data.NetCDF.Raw.NetCDF4
                        Data.NetCDF.Raw.Utils
-                       C2HS
   build-depends:       base          < 5,
                        containers,
                        either,

@@ -2,9 +2,6 @@
 
 module Data.NetCDF.Raw.Base where
 
-import System.IO.Unsafe (unsafePerformIO)
-import C2HS
-
 import Data.NetCDF.Raw.Utils
 
 #include <netcdf.h>

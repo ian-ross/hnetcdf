@@ -2,8 +2,6 @@
 
 module Data.NetCDF.Raw.NetCDF4 where
 
-import C2HS
-
 #include <netcdf.h>
 
 --------------------------------------------------------------------------------

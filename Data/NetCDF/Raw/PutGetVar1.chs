@@ -4,8 +4,6 @@
 
 module Data.NetCDF.Raw.PutGetVar1 where
 
-import C2HS
-
 import Data.NetCDF.Raw.Utils
 
 #include <netcdf.h>

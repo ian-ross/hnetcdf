@@ -1,9 +1,16 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 
-module Data.NetCDF.Raw.Utils where
+module Data.NetCDF.Raw.Utils
+       ( module Data.NetCDF.Raw.Utils
+       , module Foreign
+       , module Foreign.C
+       , unsafePerformIO
+       ) where
 
 import Control.Monad (liftM)
-import C2HS
+import Foreign hiding (unsafePerformIO)
+import Foreign.C
+import System.IO.Unsafe (unsafePerformIO)
 
 ncMaxName, ncMaxDims, ncMaxVars, ncMaxAttrs, ncMaxVarDims :: Int
 ncMaxName = 256
@@ -14,6 +21,12 @@ ncMaxVarDims = 1024
 
 
 -- Utilities.
+
+peekIntConv :: (Storable a, Integral a, Integral b) => Ptr a -> IO b
+peekIntConv = liftM fromIntegral . peek
+
+peekFloatConv :: (Storable a, RealFloat a, RealFloat b) => Ptr a -> IO b
+peekFloatConv = liftM realToFrac . peek
 
 withIntArray :: (Storable a, Integral a) => [a] -> (Ptr CInt -> IO b) -> IO b
 withIntArray = withArray . liftM fromIntegral

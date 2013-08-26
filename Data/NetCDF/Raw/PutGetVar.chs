@@ -6,7 +6,7 @@ module Data.NetCDF.Raw.PutGetVar where
 
 import Data.Word
 import qualified Data.Vector.Storable as SV
-import C2HS
+
 
 #include <netcdf.h>
 

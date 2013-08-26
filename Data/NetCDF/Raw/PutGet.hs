@@ -2,9 +2,7 @@
 
 module Data.NetCDF.Raw.PutGet where
 
-import Foreign.C
-import Foreign.Ptr
-import C2HS
+import Data.NetCDF.Raw.Utils
 
 
 -- WRITING AND READING SINGLE DATA VALUES

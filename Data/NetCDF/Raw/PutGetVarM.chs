@@ -6,7 +6,6 @@ module Data.NetCDF.Raw.PutGetVarM where
 
 import Data.Word
 import qualified Data.Vector.Storable as SV
-import C2HS
 
 import Data.NetCDF.Raw.Utils
 

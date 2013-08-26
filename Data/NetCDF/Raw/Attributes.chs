@@ -4,7 +4,6 @@ module Data.NetCDF.Raw.Attributes where
 
 import Data.Char
 import Control.Monad (liftM)
-import C2HS
 
 import Data.NetCDF.Raw.Utils
 
