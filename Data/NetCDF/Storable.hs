@@ -1,5 +1,10 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
-module Data.NetCDF.Storable where
+module Data.NetCDF.Storable
+       ( NcStorable (..)
+       , withSizeArray
+       , put_var1 , put_var, put_vara
+       , get_var1 , get_var
+       ) where
 
 import Foreign.C
 import Foreign.Ptr

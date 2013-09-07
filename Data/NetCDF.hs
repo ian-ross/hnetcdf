@@ -4,6 +4,7 @@ module Data.NetCDF
        ( module Data.NetCDF.Raw
        , module Data.NetCDF.Types
        , module Data.NetCDF.Metadata
+       , NcStorable (..)
        , IOMode (..)
        , openFile, closeFile, withFile
        , get1, get ) where
