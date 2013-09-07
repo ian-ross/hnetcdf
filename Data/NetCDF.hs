@@ -6,12 +6,13 @@ module Data.NetCDF
        , module Data.NetCDF.Metadata
        , IOMode (..)
        , openFile, closeFile, withFile
-       , get1 ) where
+       , get1, get ) where
 
 import Data.NetCDF.Raw
 import Data.NetCDF.Types
 import Data.NetCDF.Metadata
 import Data.NetCDF.Storable
+import Data.NetCDF.Store
 import Data.NetCDF.Utils
 
 import Control.Applicative ((<$>))
@@ -19,59 +20,75 @@ import Control.Exception (bracket)
 import Control.Monad (forM, void)
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Reader
-import Control.Monad.Trans.Either
+import Control.Error
 import Data.List
 import qualified Data.Map as M
 import Foreign.C
 import System.IO (IOMode (..))
 
 -- | Open a NetCDF file and read all metadata.
-openFile :: FilePath -> IOMode -> IO (Either NcError NcInfo)
-openFile p mode = runEitherT $ runReaderT go ("openFile", p) where
-  go :: Access NcInfo
-  go = do
-    ncid <- chk $ nc_open p (ncIOMode mode)
-    (ndims, nvars, nattrs, unlim) <- chk $ nc_inq ncid
-    dims <- forM [0..ndims-1] $ \dimid -> do
-      (name, len) <- chk $ nc_inq_dim ncid dimid
-      return $ NcDim name len (dimid == unlim)
-    attrs <- forM [0..nattrs-1] $ \attid -> do
-      n <- chk $ nc_inq_attname ncid ncGlobal attid
-      (itype, len) <- chk $ nc_inq_att ncid ncGlobal n
-      a <- readAttr ncid ncGlobal n (toEnum itype) len
-      return a
-    vars <- forM [0..nvars-1] $ \varid -> do
-      (n, itype, nvdims, vdimids, nvatts) <- chk $ nc_inq_var ncid varid
-      let vdims = map (dims !!) $ take nvdims vdimids
-      vattrs <- forM [0..nvatts-1] $ \vattid -> do
-        vn <- chk $ nc_inq_attname ncid varid vattid
-        (aitype, alen) <- chk $ nc_inq_att ncid varid vn
-        a <- readAttr ncid varid vn (toEnum aitype) alen
-        return a
-      let vattmap = foldl (\m a -> M.insert (ncAttrName a) a m) M.empty vattrs
-      return $ NcVar n (toEnum itype) vdims vattmap
-    let dimmap = foldl (\m d -> M.insert (ncDimName d) d m) M.empty dims
-        attmap = foldl (\m a -> M.insert (ncAttrName a) a m) M.empty attrs
-        varmap = foldl (\m v -> M.insert (ncVarName v) v m) M.empty vars
-        varidmap = M.fromList $ zip (map ncVarName vars) [0..]
-    return $ NcInfo p dimmap varmap attmap ncid varidmap
+openFile :: FilePath -> IOMode -> NcIO NcInfo
+openFile p mode = runAccess "openFile" p $ do
+  ncid <- chk $ nc_open p (ncIOMode mode)
+  (ndims, nvars, nattrs, unlim) <- chk $ nc_inq ncid
+  dims <- forM [0..ndims-1] (read1Dim ncid unlim)
+  attrs <- forM [0..nattrs-1] (read1Attr ncid ncGlobal)
+  vars <- forM [0..nvars-1] (read1Var ncid dims)
+  let mkMap nf = foldl (\m v -> M.insert (nf v) v m) M.empty
+      dimmap = mkMap ncDimName dims
+      attmap = mkMap ncAttrName attrs
+      varmap = mkMap ncVarName vars
+      varidmap = M.fromList $ zip (map ncVarName vars) [0..]
+  return $ NcInfo p dimmap varmap attmap ncid varidmap
 
 -- | Close a NetCDF file.
 closeFile :: NcInfo -> IO ()
 closeFile (NcInfo _ _ _ _ ncid _) = void $ nc_close ncid
 
--- | Bracket file use: a little different from the standard 'bracket'
+-- | Bracket file use: a little different from the standard 'withFile'
 -- function because of error handling.
 withFile :: FilePath -> IOMode
          -> (NcInfo -> IO r) -> (NcError -> IO r) -> IO r
 withFile p m ok err = bracket
                       (openFile p m)
-                      (\lr -> case lr of
-                          Left _ -> return ()
-                          Right i -> closeFile i)
-                      (\lr -> case lr of
-                          Left e -> err e
-                          Right i -> ok i)
+                      (either (const $ return ()) closeFile)
+                      (either err ok)
+
+
+get1 :: NcStorable a => NcInfo -> NcVar -> [Int] -> NcIO a
+get1 nc var idxs = runAccess "get1" (ncName nc) $
+  chk $ get_var1 (ncId nc) ((ncVarIds nc) M.! (ncVarName var)) idxs
+
+get :: (NcStorable a, NcStore s) => NcInfo -> NcVar -> NcIO (s a)
+get nc var = runAccess "get" (ncName nc) $ do
+  let ncid = ncId nc
+      varid = (ncVarIds nc) M.! (ncVarName var)
+      sz = map ncDimLength $ ncVarDims var
+  chk $ get_var ncid varid sz
+
+
+-- | Helper function to read a single NC dimension.
+read1Dim :: Int -> Int -> Int -> Access NcDim
+read1Dim ncid unlim dimid = do
+  (name, len) <- chk $ nc_inq_dim ncid dimid
+  return $ NcDim name len (dimid == unlim)
+
+-- | Helper function to read a single NC attribute.
+read1Attr :: Int -> Int -> Int -> Access NcAttr
+read1Attr ncid varid attid = do
+  n <- chk $ nc_inq_attname ncid varid attid
+  (itype, len) <- chk $ nc_inq_att ncid varid n
+  a <- readAttr ncid varid n (toEnum itype) len
+  return a
+
+-- | Helper function to read metadata for a single NC variable.
+read1Var :: Int -> [NcDim] -> Int -> Access NcVar
+read1Var ncid dims varid = do
+  (n, itype, nvdims, vdimids, nvatts) <- chk $ nc_inq_var ncid varid
+  let vdims = map (dims !!) $ take nvdims vdimids
+  vattrs <- forM [0..nvatts-1] (read1Attr ncid varid)
+  let vattmap = foldl (\m a -> M.insert (ncAttrName a) a m) M.empty vattrs
+  return $ NcVar n (toEnum itype) vdims vattmap
 
 -- | Read an attribute from a NetCDF variable with error handling.
 readAttr :: Int -> Int -> String -> NcType -> Int -> Access NcAttr
@@ -88,11 +105,4 @@ readAttr' :: Show a => Int -> Int -> String -> Int
           -> (Int -> Int -> String -> Int -> IO (Int, [a])) -> Access NcAttr
 readAttr' nc var n l rf = NcAttr n <$> (chk $ rf nc var n l)
 
-
-get1 :: NcStorable a => NcInfo -> NcVar -> [Int] -> IO (Either NcError a)
-get1 nc var idxs = runEitherT $ flip runReaderT ("get1", ncName nc) $ do
-    let ncid = ncId nc
-        vid = (ncVarIds nc) M.! (ncVarName var)
-    v <- chk $ get_var1 ncid vid idxs
-    return v
 

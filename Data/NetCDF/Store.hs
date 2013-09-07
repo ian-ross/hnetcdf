@@ -1,10 +1,11 @@
-{-# LANGUAGE TypeFamilies, FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 module Data.NetCDF.Store where
 
+import Data.List (reverse)
 import Foreign.Storable
 import Foreign.ForeignPtr
 
-import Data.Vector.Storable
+import Data.Vector.Storable hiding (reverse)
 
 import Data.Array.Repa
 import qualified Data.Array.Repa as R
@@ -14,19 +15,16 @@ import Data.Array.Repa.Repr.ForeignPtr (F)
 import Data.NetCDF.Types
 
 class NcStore s where
-  type Size s :: *
   toForeignPtr :: Storable e => s e -> ForeignPtr e
-  fromForeignPtr :: Storable e => ForeignPtr e -> Size s -> s e
+  fromForeignPtr :: Storable e => ForeignPtr e -> [Int] -> s e
   smap :: (Storable a, Storable b) => (a -> b) -> s a -> s b
 
 instance NcStore Vector where
-  type Size Vector = Int
   toForeignPtr = fst . unsafeToForeignPtr0
-  fromForeignPtr = unsafeFromForeignPtr0
+  fromForeignPtr p s = unsafeFromForeignPtr0 p (Prelude.product s)
   smap = Data.Vector.Storable.map
 
 instance Shape sh => NcStore (Array F sh) where
-  type Size (Array F sh) = sh
   toForeignPtr = RF.toForeignPtr
-  fromForeignPtr = flip RF.fromForeignPtr
+  fromForeignPtr p s = RF.fromForeignPtr (shapeOfList $ reverse s) p
   smap f s = computeS $ R.map f s

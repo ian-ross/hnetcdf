@@ -9,8 +9,15 @@ import Control.Monad.IO.Class
 import Control.Monad.Trans.Reader
 import Control.Monad.Trans.Either
 
+-- | Simple synonym to tidy up signatures.
+type NcIO a = IO (Either NcError a)
+
 -- | Monad stack to help with handling errors from FFI functions.
 type Access a = ReaderT (String, FilePath) (EitherT NcError IO) a
+
+-- | Utility function to run access monad stack.
+runAccess :: String -> String -> Access a -> NcIO a
+runAccess f p = runEitherT . flip runReaderT (f, p)
 
 -- | Utility class to make dealing with status return from foreign
 -- NetCDF functions a little easier.

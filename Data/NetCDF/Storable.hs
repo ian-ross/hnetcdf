@@ -1,4 +1,4 @@
-{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 module Data.NetCDF.Storable where
 
 import Foreign.C
@@ -7,6 +7,7 @@ import Foreign.ForeignPtr
 import Foreign.Storable
 import Foreign.Marshal.Array
 import Foreign.Marshal.Alloc
+import Control.Applicative ((<$>))
 import Control.Monad (liftM)
 import Data.Word
 
@@ -36,6 +37,22 @@ get_var1 nc var idxs = do
       res <- ffi_get_var1 ncid varid idxsp iv
       v <- peek iv
       return $ (fromIntegral res, v)
+
+put_var :: (NcStorable a, NcStore s) => Int -> Int -> s a -> IO Int
+put_var nc var v = do
+  let ncid = fromIntegral nc
+      varid = fromIntegral var
+      is = toForeignPtr v
+  withForeignPtr is $ \isp -> fromIntegral <$> ffi_put_var ncid varid isp
+
+get_var :: (NcStorable a, NcStore s) => Int -> Int -> [Int] -> IO (Int, s a)
+get_var nc var sz = do
+  let ncid = fromIntegral nc
+      varid = fromIntegral var
+  is <- mallocForeignPtrArray (product sz)
+  withForeignPtr is $ \isp -> do
+    res <- ffi_get_var ncid varid isp
+    return (fromIntegral res, fromForeignPtr is sz)
 
 put_vara :: (NcStorable a, NcStore s) =>
             Int -> Int -> [Int] -> [Int] -> s a -> IO Int
