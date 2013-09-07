@@ -7,7 +7,7 @@ module Data.NetCDF
        , NcStorable (..)
        , IOMode (..)
        , openFile, closeFile, withFile
-       , get1, get ) where
+       , get1, get, getA ) where
 
 import Data.NetCDF.Raw
 import Data.NetCDF.Types
@@ -66,6 +66,13 @@ get nc var = runAccess "get" (ncName nc) $ do
       varid = (ncVarIds nc) M.! (ncVarName var)
       sz = map ncDimLength $ ncVarDims var
   chk $ get_var ncid varid sz
+
+getA :: (NcStorable a, NcStore s)
+     => NcInfo -> NcVar -> [Int] -> [Int] -> NcIO (s a)
+getA nc var start count = runAccess "getA" (ncName nc) $ do
+  let ncid = ncId nc
+      varid = (ncVarIds nc) M.! (ncVarName var)
+  chk $ get_vara ncid varid start count
 
 
 -- | Helper function to read a single NC dimension.

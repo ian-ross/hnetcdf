@@ -3,7 +3,7 @@ module Data.NetCDF.Storable
        ( NcStorable (..)
        , withSizeArray
        , put_var1 , put_var, put_vara
-       , get_var1 , get_var
+       , get_var1 , get_var, get_vara
        ) where
 
 import Foreign.C
@@ -70,6 +70,18 @@ put_vara nc var start count v = do
       withSizeArray count $ \countp -> do
         res <- ffi_put_vara ncid varid startp countp isp
         return $ fromIntegral res
+
+get_vara :: (NcStorable a, NcStore s)
+         => Int -> Int -> [Int] -> [Int] -> IO (Int, s a)
+get_vara nc var start count = do
+  let ncid = fromIntegral nc
+      varid = fromIntegral var
+  is <- mallocForeignPtrArray (product count)
+  withForeignPtr is $ \isp ->
+    withSizeArray start $ \s ->
+      withSizeArray count $ \c -> do
+        res <- ffi_get_vara ncid varid s c isp
+        return (fromIntegral res, fromForeignPtr is (filter (>1) count))
 
 
 class Storable a => NcStorable a where
