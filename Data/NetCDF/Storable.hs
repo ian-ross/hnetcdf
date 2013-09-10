@@ -1,9 +1,9 @@
-{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE MultiParamTypeClasses, TypeFamilies #-}
 module Data.NetCDF.Storable
        ( NcStorable (..)
        , withSizeArray
-       , put_var1 , put_var, put_vara
-       , get_var1 , get_var, get_vara
+       , put_var1 , put_var, put_vara, put_vars
+       , get_var1 , get_var, get_vara, get_vars
        ) where
 
 import Foreign.C
@@ -83,10 +83,37 @@ get_vara nc var start count = do
         res <- ffi_get_vara ncid varid s c isp
         return (fromIntegral res, fromForeignPtr is (filter (>1) count))
 
+put_vars :: (NcStorable a, NcStore s) =>
+            Int -> Int -> [Int] -> [Int] -> [Int] -> s a -> IO Int
+put_vars nc var start count stride v = do
+  let ncid = fromIntegral nc
+      varid = fromIntegral var
+      is = toForeignPtr v
+  withForeignPtr is $ \isp ->
+    withSizeArray start $ \startp ->
+      withSizeArray count $ \countp -> do
+        withSizeArray stride $ \stridep -> do
+          res <- ffi_put_vars ncid varid startp countp stridep isp
+          return $ fromIntegral res
+
+get_vars :: (NcStorable a, NcStore s)
+         => Int -> Int -> [Int] -> [Int] -> [Int] -> IO (Int, s a)
+get_vars nc var start count stride = do
+  let ncid = fromIntegral nc
+      varid = fromIntegral var
+  is <- mallocForeignPtrArray (product count)
+  withForeignPtr is $ \isp ->
+    withSizeArray start $ \s ->
+      withSizeArray count $ \c -> do
+        withSizeArray stride $ \str -> do
+          res <- ffi_get_vars ncid varid s c str isp
+          return (fromIntegral res, fromForeignPtr is (filter (>1) count))
+
 
 class Storable a => NcStorable a where
-  ncType :: a -> NcType
-  ncTypeVal :: a -> Int
+--  ncType :: a -> NcType
+--  ncTypeVal :: a -> Int
+--  type NcHsType a :: *
   ffi_put_var1 :: CInt -> CInt -> Ptr CULong -> Ptr a -> IO CInt
   ffi_get_var1 :: CInt -> CInt -> Ptr CULong -> Ptr a -> IO CInt
   ffi_put_var :: CInt -> CInt -> Ptr a -> IO CInt
@@ -101,8 +128,8 @@ class Storable a => NcStorable a where
 
 instance NcStorable CSChar where
   -- #define NC_BYTE 1 /**< signed 1 byte integer */
-  ncType _ = NcByte
-  ncTypeVal _ = 1
+--  ncType _ = NcByte
+--  ncTypeVal _ = 1
   ffi_put_var1 = nc_put_var1_schar'_
   ffi_get_var1 = nc_get_var1_schar'_
   ffi_put_var = nc_put_var_schar'_
@@ -114,8 +141,8 @@ instance NcStorable CSChar where
 
 instance NcStorable CChar where
   -- #define NC_CHAR 2 /**< ISO/ASCII character */
-  ncType _ = NcChar
-  ncTypeVal _ = 2
+--  ncType _ = NcChar
+--  ncTypeVal _ = 2
   ffi_put_var1 = nc_put_var1_text'_
   ffi_get_var1 = nc_get_var1_text'_
   ffi_put_var = nc_put_var_text'_
@@ -127,8 +154,8 @@ instance NcStorable CChar where
 
 instance NcStorable CShort where
   -- #define NC_SHORT 3 /**< signed 2 byte integer */
-  ncType _ = NcShort
-  ncTypeVal _ = 3
+--  ncType _ = NcShort
+--  ncTypeVal _ = 3
   ffi_put_var1 = nc_put_var1_short'_
   ffi_get_var1 = nc_get_var1_short'_
   ffi_put_var = nc_put_var_short'_
@@ -140,8 +167,8 @@ instance NcStorable CShort where
 
 instance NcStorable CInt where
   -- #define NC_INT 4 /**< signed 4 byte integer */
-  ncType _ = NcInt
-  ncTypeVal _ = 4
+--  ncType _ = NcInt
+--  ncTypeVal _ = 4
   ffi_put_var1 = nc_put_var1_int'_
   ffi_get_var1 = nc_get_var1_int'_
   ffi_put_var = nc_put_var_int'_
@@ -153,8 +180,8 @@ instance NcStorable CInt where
 
 instance NcStorable CFloat where
   -- #define NC_FLOAT 5 /**< single precision floating point number */
-  ncType _ = NcFloat
-  ncTypeVal _ = 5
+--  ncType _ = NcFloat
+--  ncTypeVal _ = 5
   ffi_put_var1 = nc_put_var1_float'_
   ffi_get_var1 = nc_get_var1_float'_
   ffi_put_var = nc_put_var_float'_
@@ -166,8 +193,8 @@ instance NcStorable CFloat where
 
 instance NcStorable CDouble where
   -- #define NC_DOUBLE 6 /**< double precision floating point number */
-  ncType _ = NcDouble
-  ncTypeVal _ = 6
+--  ncType _ = NcDouble
+--  ncTypeVal _ = 6
   ffi_put_var1 = nc_put_var1_double'_
   ffi_get_var1 = nc_get_var1_double'_
   ffi_put_var = nc_put_var_double'_
@@ -179,8 +206,8 @@ instance NcStorable CDouble where
 
 instance NcStorable CUChar where
   -- #define NC_UBYTE 7 /**< unsigned 1 byte int */
-  ncType _ = NcUByte
-  ncTypeVal _ = 7
+--  ncType _ = NcUByte
+--  ncTypeVal _ = 7
   ffi_put_var1 = nc_put_var1_uchar'_
   ffi_get_var1 = nc_get_var1_uchar'_
   ffi_put_var = nc_put_var_uchar'_
@@ -192,8 +219,8 @@ instance NcStorable CUChar where
 
 instance NcStorable CUShort where
   -- #define NC_USHORT 8 /**< unsigned 2-byte int */
-  ncType _ = NcUShort
-  ncTypeVal _ = 8
+--  ncType _ = NcUShort
+--  ncTypeVal _ = 8
   ffi_put_var1 = nc_put_var1_ushort'_
   ffi_get_var1 = nc_get_var1_ushort'_
   ffi_put_var = nc_put_var_ushort'_
@@ -205,8 +232,8 @@ instance NcStorable CUShort where
 
 instance NcStorable CUInt where
   -- #define NC_UINT 9 /**< unsigned 4-byte int */
-  ncType _ = NcUInt
-  ncTypeVal _ = 9
+--  ncType _ = NcUInt
+--  ncTypeVal _ = 9
   ffi_put_var1 = nc_put_var1_uint'_
   ffi_get_var1 = nc_get_var1_uint'_
   ffi_put_var = nc_put_var_uint'_
@@ -218,8 +245,8 @@ instance NcStorable CUInt where
 
 instance NcStorable CLong where
   -- #define NC_INT64 10 /**< signed 8-byte int */
-  ncType _ = NcInt64
-  ncTypeVal _ = 10
+--  ncType _ = NcInt64
+--  ncTypeVal _ = 10
   ffi_put_var1 = nc_put_var1_long'_
   ffi_get_var1 = nc_get_var1_long'_
   ffi_put_var = nc_put_var_long'_

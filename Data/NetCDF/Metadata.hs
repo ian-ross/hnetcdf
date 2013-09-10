@@ -36,7 +36,7 @@ data NcVar = NcVar { ncVarName  :: String
 -- | Metadata information for a whole NetCDF file.
 data NcInfo = NcInfo { ncName :: FilePath
                        -- ^ File name.
-                     ,ncDims :: M.Map String NcDim
+                     , ncDims :: M.Map String NcDim
                        -- ^ Dimensions defined in file.
                      , ncVars :: M.Map String NcVar
                        -- ^ Variables defined in file.
