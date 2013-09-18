@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable #-}
+-- | Basic utility type definitions for NetCDF bindings.
 
 module Data.NetCDF.Types where
 
@@ -51,8 +52,10 @@ instance Enum NcType where
     12 -> NcString
     _ -> throw (NcInvalidType n)
 
+-- | Internal representation of NetCDF IDs.
 type NcId = Int
 
+-- | NetCDF error types.
 data NcError = NcError String Int String FilePath
              | NcInvalidArgs String
              | NcInvalidType Int
@@ -60,7 +63,8 @@ data NcError = NcError String Int String FilePath
 
 instance Exception NcError
 
-
+-- | Convenience function to convert `IOMode` values to integer values
+-- for calls to NetCDF functions.
 ncIOMode :: IOMode -> Int
 ncIOMode ReadMode = 0
 ncIOMode WriteMode = 1

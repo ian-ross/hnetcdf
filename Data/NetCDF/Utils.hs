@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies, FlexibleInstances, ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies, FlexibleInstances #-}
 module Data.NetCDF.Utils where
 
 import Data.NetCDF.Raw

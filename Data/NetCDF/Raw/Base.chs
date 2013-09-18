@@ -1,5 +1,7 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 
+-- | Raw bindings for basic NetCDF functions.
+
 module Data.NetCDF.Raw.Base where
 
 import Data.NetCDF.Raw.Utils

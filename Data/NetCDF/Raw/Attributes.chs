@@ -1,5 +1,7 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 
+-- | Raw bindings for attribute handling functions.
+
 module Data.NetCDF.Raw.Attributes where
 
 import Data.Char

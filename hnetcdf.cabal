@@ -1,7 +1,10 @@
 name:                hnetcdf
 version:             0.1.0.0
 synopsis:            Haskell NetCDF library
--- description:
+description:
+  Bindings to the Unidata NetCDF library, along with a higher-level
+  Haskell interface that attempts to provide container polymorphic
+  data access (initially just Storable vectors and Repa arrays).
 license:             BSD3
 license-file:        LICENSE
 author:              Ian Ross
@@ -10,10 +13,12 @@ copyright:           Copyright (2013) Ian Ross
 category:            Data
 build-type:          Simple
 cabal-version:       >=1.8
+homepage:            https://github.com/ian-ross/hnetcdf
 
 Library
   exposed-modules:     Data.NetCDF
                        Data.NetCDF.Metadata
+                       Data.NetCDF.PutGet
                        Data.NetCDF.Storable
                        Data.NetCDF.Store
                        Data.NetCDF.Types
@@ -21,7 +26,6 @@ Library
                        Data.NetCDF.Raw
                        Data.NetCDF.Raw.Base
                        Data.NetCDF.Raw.PutGet
-                       Data.NetCDF.Raw.PutGetVar1
                        Data.NetCDF.Raw.Attributes
                        Data.NetCDF.Raw.NetCDF4
                        Data.NetCDF.Raw.Utils

@@ -1,5 +1,7 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 
+-- | FFI utility functions for raw bindings.
+
 module Data.NetCDF.Raw.Utils
        ( module Data.NetCDF.Raw.Utils
        , module Foreign
@@ -20,7 +22,7 @@ ncMaxAttrs = 8192
 ncMaxVarDims = 1024
 
 
--- Utilities.
+-- | FFI utilities
 
 peekIntConv :: (Storable a, Integral a, Integral b) => Ptr a -> IO b
 peekIntConv = liftM fromIntegral . peek
@@ -30,8 +32,6 @@ peekFloatConv = liftM realToFrac . peek
 
 withIntArray :: (Storable a, Integral a) => [a] -> (Ptr CInt -> IO b) -> IO b
 withIntArray = withArray . liftM fromIntegral
-withSizeArray :: (Storable a, Integral a) => [a] -> (Ptr CULong -> IO b) -> IO b
-withSizeArray = withArray . liftM fromIntegral
 
 withIntPtrConv :: (Storable a, Storable b, Integral a, Integral b)
                   => a -> (Ptr b -> IO c) -> IO c

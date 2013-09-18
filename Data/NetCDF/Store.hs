@@ -1,4 +1,8 @@
 {-# LANGUAGE FlexibleInstances #-}
+-- | The /store polymorphism/ for the functions to get the values of
+-- NetCDF variables relies on a simple `NcStore` typeclass for
+-- converting between /store/ values and @ForeignPtr@s.
+
 module Data.NetCDF.Store where
 
 import Data.List (reverse)
@@ -14,6 +18,10 @@ import Data.Array.Repa.Repr.ForeignPtr (F)
 
 import Data.NetCDF.Types
 
+-- | Class representing containers suitable for storing values read
+-- from NetCDF variables.  Just has methods to convert back and forth
+-- between the store and a foreign pointer, and to perform simple
+-- mapping over the store.
 class NcStore s where
   toForeignPtr :: Storable e => s e -> ForeignPtr e
   fromForeignPtr :: Storable e => ForeignPtr e -> [Int] -> s e

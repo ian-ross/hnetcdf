@@ -1,4 +1,7 @@
 {-# LANGUAGE ExistentialQuantification, StandaloneDeriving #-}
+-- | NetCDF file metadata handling: when a NetCDF file is opened,
+-- metadata defining the dimensions, variables and attributes in the
+-- file are read all at once to create a value of type `NcInfo`.
 
 module Data.NetCDF.Metadata
        ( NcDim (..)
@@ -49,14 +52,18 @@ data NcInfo = NcInfo { ncName :: FilePath
                      } deriving Show
 
 
+-- | Extract dimension metadata by name.
 ncDim :: NcInfo -> String -> Maybe NcDim
 ncDim nc n = M.lookup n $ ncDims nc
 
+-- | Extract a global attribute by name.
 ncAttr :: NcInfo -> String -> Maybe NcAttr
 ncAttr nc n = M.lookup n $ ncAttrs nc
 
+-- | Extract variable metadata by name.
 ncVar :: NcInfo -> String -> Maybe NcVar
 ncVar nc n = M.lookup n $ ncVars nc
 
+-- | Extract an attribute for a given variable by name.
 ncVarAttr :: NcVar -> String -> Maybe NcAttr
 ncVarAttr v n = M.lookup n $ ncVarAttrs v

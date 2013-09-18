@@ -1,3 +1,5 @@
+-- | Raw FFI bindings to Unidata NetCDF library.
+
 module Data.NetCDF.Raw
        ( module Data.NetCDF.Raw.Base
        , module Data.NetCDF.Raw.PutGet

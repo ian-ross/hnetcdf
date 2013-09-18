@@ -1,8 +1,47 @@
-{-# LANGUAGE TypeFamilies, FlexibleInstances, ScopedTypeVariables #-}
+-- | Bindings to the Unidata NetCDF data access library.
+--
+--   As well as conventional low-level FFI bindings to the functions
+--   in the NetCDF library (in the "Data.NetCDF.Raw" modules),
+--   @hnetcdf@ provides a higher-level Haskell interface (currently
+--   only for reading data).  This higher-level interface aims to
+--   provide a "container polymorphic" view of NetCDF data allowing
+--   NetCDF variables to be read into @Storable@ @Vectors@ and Repa
+--   arrays easily.
+--
+--   For example:
+--
+-- > import Data.NetCDF
+-- > import Foreign.C
+-- > import qualified Data.Vector.Storable as SV
+-- > ...
+-- > type SVRet = IO (Either NcError (SV.Vector a))
+-- > ...
+-- >   enc <- openFile "tst.nc" ReadMode
+-- >   case enc of
+-- >     Right nc -> do
+-- >       eval <- get nc "varname" :: SVRet CDouble
+-- >       ...
+--
+--   gets the full contents of a NetCDF variable as a @Storable@
+--   @Vector@, while the following code reads the same variable
+--   (assumed to be three-dimensional) into a Repa array:
+--
+-- > import Data.NetCDF
+-- > import Foreign.C
+-- > import qualified Data.Array.Repa as R
+-- > import qualified Data.Array.Repa.Eval as RE
+-- > import Data.Array.Repa.Repr.ForeignPtr (F)
+-- > ...
+-- > type RepaRet3 a = IO (Either NcError (R.Array F R.DIM3 a))
+-- > ...
+-- >   enc <- openFile "tst.nc" ReadMode
+-- >   case enc of
+-- >     Right nc -> do
+-- >       eval <- get nc "varname" :: RepaRet3 CDouble
+-- >       ...
 
 module Data.NetCDF
-       ( module Data.NetCDF.Raw
-       , module Data.NetCDF.Types
+       ( module Data.NetCDF.Types
        , module Data.NetCDF.Metadata
        , NcStorable (..)
        , IOMode (..)
@@ -12,6 +51,7 @@ module Data.NetCDF
 import Data.NetCDF.Raw
 import Data.NetCDF.Types
 import Data.NetCDF.Metadata
+import Data.NetCDF.PutGet
 import Data.NetCDF.Storable
 import Data.NetCDF.Store
 import Data.NetCDF.Utils
@@ -55,11 +95,12 @@ withFile p m ok err = bracket
                       (either (const $ return ()) closeFile)
                       (either err ok)
 
-
+-- | Read a single value from an open NetCDF file.
 get1 :: NcStorable a => NcInfo -> NcVar -> [Int] -> NcIO a
 get1 nc var idxs = runAccess "get1" (ncName nc) $
   chk $ get_var1 (ncId nc) ((ncVarIds nc) M.! (ncVarName var)) idxs
 
+-- | Read a whole variable from an open NetCDF file.
 get :: (NcStorable a, NcStore s) => NcInfo -> NcVar -> NcIO (s a)
 get nc var = runAccess "get" (ncName nc) $ do
   let ncid = ncId nc
@@ -67,6 +108,7 @@ get nc var = runAccess "get" (ncName nc) $ do
       sz = map ncDimLength $ ncVarDims var
   chk $ get_var ncid varid sz
 
+-- | Read a slice of a variable from an open NetCDF file.
 getA :: (NcStorable a, NcStore s)
      => NcInfo -> NcVar -> [Int] -> [Int] -> NcIO (s a)
 getA nc var start count = runAccess "getA" (ncName nc) $ do
@@ -74,6 +116,7 @@ getA nc var start count = runAccess "getA" (ncName nc) $ do
       varid = (ncVarIds nc) M.! (ncVarName var)
   chk $ get_vara ncid varid start count
 
+-- | Read a strided slice of a variable from an open NetCDF file.
 getS :: (NcStorable a, NcStore s)
      => NcInfo -> NcVar -> [Int] -> [Int] -> [Int] -> NcIO (s a)
 getS nc var start count stride = runAccess "getS" (ncName nc) $ do

@@ -1,5 +1,8 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 
+-- | Raw FFI bindings for NetCDF functions for reading and writing
+-- data values.
+
 module Data.NetCDF.Raw.PutGet where
 
 import Data.NetCDF.Raw.Utils

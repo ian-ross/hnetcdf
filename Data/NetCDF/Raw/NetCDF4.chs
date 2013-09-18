@@ -1,5 +1,7 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 
+-- | Raw bindings for NetCDF4 features (not implemented).
+
 module Data.NetCDF.Raw.NetCDF4 where
 
 #include <netcdf.h>
