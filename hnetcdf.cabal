@@ -53,9 +53,9 @@ Test-Suite test-raw-metadata
                        containers                  >= 0.4      && < 0.6,
                        vector                      >= 0.9      && < 0.11,
                        repa                        >= 3.2      && < 3.3,
-                       test-framework,
+                       test-framework              >= 0.3,
                        test-framework-hunit,
-                       test-framework-quickcheck2,
+                       test-framework-quickcheck2  >= 0.3,
                        HUnit,
                        QuickCheck
   extra-libraries:     netcdf
@@ -70,9 +70,9 @@ Test-Suite test-raw-get-put
                        vector                      >= 0.9      && < 0.11,
                        repa                        >= 3.2      && < 3.3,
                        directory                   >= 1.1      && < 1.3,
-                       test-framework,
+                       test-framework              >= 0.3,
                        test-framework-hunit,
-                       test-framework-quickcheck2,
+                       test-framework-quickcheck2  >= 0.3,
                        HUnit,
                        QuickCheck
   extra-libraries:     netcdf
@@ -87,9 +87,9 @@ Test-Suite test-raw-attributes
                        vector                      >= 0.9      && < 0.11,
                        repa                        >= 3.2      && < 3.3,
                        directory                   >= 1.1      && < 1.3,
-                       test-framework,
+                       test-framework              >= 0.3,
                        test-framework-hunit,
-                       test-framework-quickcheck2,
+                       test-framework-quickcheck2  >= 0.3,
                        HUnit,
                        QuickCheck
   extra-libraries:     netcdf
@@ -105,9 +105,9 @@ Test-Suite test-get
                        vector                      >= 0.9      && < 0.11,
                        repa                        >= 3.2      && < 3.3,
                        directory                   >= 1.1      && < 1.3,
-                       test-framework,
+                       test-framework              >= 0.3,
                        test-framework-hunit,
-                       test-framework-quickcheck2,
+                       test-framework-quickcheck2  >= 0.3,
                        HUnit,
                        QuickCheck
   extra-libraries:     netcdf

@@ -3,4 +3,8 @@ language: haskell
 before_install:
  - sudo apt-get update -qq
  - sudo apt-get install -qq libnetcdf-dev
+ - ghc-pkg list
+ - cabal install --only-dependencies --enable-tests
  - cabal install c2hs
+
+install: true
