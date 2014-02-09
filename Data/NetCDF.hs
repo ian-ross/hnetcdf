@@ -77,7 +77,7 @@ openFile p mode = runAccess "openFile" p $ do
   vars <- forM [0..nvars-1] (read1Var ncid dims)
   let mkMap nf = foldl (\m v -> M.insert (nf v) v m) M.empty
       dimmap = mkMap ncDimName dims
-      attmap = mkMap ncAttrName attrs
+      attmap = M.fromList attrs
       varmap = mkMap ncVarName vars
       varidmap = M.fromList $ zip (map ncVarName vars) [0..]
   return $ NcInfo p dimmap varmap attmap ncid varidmap
@@ -132,12 +132,12 @@ read1Dim ncid unlim dimid = do
   return $ NcDim name len (dimid == unlim)
 
 -- | Helper function to read a single NC attribute.
-read1Attr :: Int -> Int -> Int -> Access NcAttr
+read1Attr :: Int -> Int -> Int -> Access (Name, NcAttr)
 read1Attr ncid varid attid = do
   n <- chk $ nc_inq_attname ncid varid attid
   (itype, len) <- chk $ nc_inq_att ncid varid n
   a <- readAttr ncid varid n (toEnum itype) len
-  return a
+  return (n, a)
 
 -- | Helper function to read metadata for a single NC variable.
 read1Var :: Int -> [NcDim] -> Int -> Access NcVar
@@ -145,22 +145,24 @@ read1Var ncid dims varid = do
   (n, itype, nvdims, vdimids, nvatts) <- chk $ nc_inq_var ncid varid
   let vdims = map (dims !!) $ take nvdims vdimids
   vattrs <- forM [0..nvatts-1] (read1Attr ncid varid)
-  let vattmap = foldl (\m a -> M.insert (ncAttrName a) a m) M.empty vattrs
+  let vattmap = foldl (\m (n, a) -> M.insert n a m) M.empty vattrs
   return $ NcVar n (toEnum itype) vdims vattmap
 
 -- | Read an attribute from a NetCDF variable with error handling.
 readAttr :: Int -> Int -> String -> NcType -> Int -> Access NcAttr
-readAttr nc var n NcChar l = readAttr' nc var n l nc_get_att_text
-readAttr nc var n NcShort l = readAttr' nc var n l nc_get_att_short
-readAttr nc var n NcInt l = readAttr' nc var n l nc_get_att_int
-readAttr nc var n NcFloat l = readAttr' nc var n l nc_get_att_float
-readAttr nc var n NcDouble l = readAttr' nc var n l nc_get_att_double
-readAttr nc var n NcUInt l = readAttr' nc var n l nc_get_att_uint
-readAttr _ _ n _ _ = return $ NcAttr n ([0] :: [CInt])
+readAttr nc var n NcChar l = readAttr' nc var n l NcAttrChar nc_get_att_text
+readAttr nc var n NcShort l = readAttr' nc var n l NcAttrShort nc_get_att_short
+readAttr nc var n NcInt l = readAttr' nc var n l NcAttrInt nc_get_att_int
+readAttr nc var n NcFloat l = readAttr' nc var n l NcAttrFloat nc_get_att_float
+readAttr nc var n NcDouble l =
+  readAttr' nc var n l NcAttrDouble nc_get_att_double
+readAttr _ _ n _ _ = return $ NcAttrInt ([0] :: [CInt])
 
 -- | Helper function for attribute reading.
-readAttr' :: Show a => Int -> Int -> String -> Int
+readAttr' :: Show a => Int -> Int -> String -> Int -> ([a] -> NcAttr)
           -> (Int -> Int -> String -> Int -> IO (Int, [a])) -> Access NcAttr
-readAttr' nc var n l rf = NcAttr n <$> (chk $ rf nc var n l)
+readAttr' nc var n l w rf = chk $ do
+  tmp <- rf nc var n l
+  return $ (fst tmp, w $ snd tmp)
 
 
