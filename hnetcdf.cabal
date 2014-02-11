@@ -23,6 +23,7 @@ Library
   exposed-modules:     Data.NetCDF
                        Data.NetCDF.Vector
                        Data.NetCDF.Repa
+                       Data.NetCDF.HMatrix
                        Data.NetCDF.Metadata
                        Data.NetCDF.PutGet
                        Data.NetCDF.Storable
@@ -37,12 +38,13 @@ Library
 --                       Data.NetCDF.Raw.NetCDF4
   build-depends:       base                        >= 4.3      && < 5,
                        containers                  >= 0.4      && < 0.6,
-                       filepath                    >= 1.3      && < 1.4,
-                       transformers                >= 0.2      && < 0.4,
                        either                      >= 3.4.1    && < 3.5,
                        errors                      >= 1.4.2    && < 1.5,
-                       vector                      >= 0.9      && < 0.11,
-                       repa                        >= 3.2      && < 3.3
+                       filepath                    >= 1.3      && < 1.4,
+                       hmatrix                     >= 0.15.2.0 && < 0.16,
+                       repa                        >= 3.2      && < 3.3,
+                       transformers                >= 0.2      && < 0.4,
+                       vector                      >= 0.9      && < 0.11
   build-tools:         c2hs
   extra-libraries:     netcdf
   ghc-options:         -Wall
@@ -105,8 +107,9 @@ Test-Suite test-get
                        base                        >= 4.3      && < 5,
                        containers                  >= 0.4      && < 0.6,
                        errors                      >= 1.4.2    && < 1.5,
-                       vector                      >= 0.9      && < 0.11,
+                       hmatrix                     >= 0.15.2.0 && < 0.16,
                        repa                        >= 3.2      && < 3.3,
+                       vector                      >= 0.9      && < 0.11,
                        directory                   >= 1.1      && < 1.3,
                        test-framework              >= 0.3,
                        test-framework-hunit,

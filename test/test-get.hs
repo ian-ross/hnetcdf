@@ -8,11 +8,13 @@ import qualified Data.Array.Repa.Eval as RE
 import Data.Array.Repa.Repr.ForeignPtr (F)
 import Control.Error
 import Control.Monad
-
+import Numeric.Container as C
 import Foreign.C
+
 import Data.NetCDF
-import Data.NetCDF.Vector
-import Data.NetCDF.Repa
+import qualified Data.NetCDF.Vector as V
+import qualified Data.NetCDF.Repa as R
+import qualified Data.NetCDF.HMatrix as H
 
 main :: IO ()
 main = defaultMain tests
@@ -43,6 +45,9 @@ tests =
     , testCase "Read (float, Repa)" (getVarRepa infile "vf" fwit)
     , testCase "Read (int, Repa)" (getVarRepa infile "vi" iwit)
     , testCase "Read (short, Repa)" (getVarRepa infile "vs" swit)
+    , testCase "Read (float, hmatrix)" (getVarHMV infile "vf" fwit)
+    , testCase "Read (int, hmatrix)" (getVarHMV infile "vi" iwit)
+    , testCase "Read (short, hmatrix)" (getVarHMV infile "vs" swit)
     ],
     testGroup "Variable slice access functions"
     [ testCase "Read (float, SV)" (getVarASV infile "vf" fwit)
@@ -66,6 +71,8 @@ tests =
 type SVRet a = IO (Either NcError (SV.Vector a))
 type RepaRet3 a = IO (Either NcError (R.Array F R.DIM3 a))
 type RepaRet1 a = IO (Either NcError (R.Array F R.DIM1 a))
+type HMVRet a = IO (Either NcError (H.HVector a))
+type HMMRet a = IO (Either NcError (H.HRowMajorMatrix a))
 
 
 --------------------------------------------------------------------------------
@@ -173,6 +180,30 @@ getVarRepa f v _ = do
               tstvals = [val R.! i | i <- idxs]
           assertBool ("Value error: " ++ show tstvals ++
                       "instead of " ++ show truevals)
+            (and $ zipWith (==) tstvals truevals)
+  void $ closeFile nc
+
+getVarHMV :: forall a. (Eq a, Num a, Show a, NcStorable a)
+          => FilePath -> String -> a -> Assertion
+getVarHMV f v _ = do
+  enc <- openFile f ReadMode
+  assertBool "failed to open file" $ isRight enc
+  let Right nc = enc
+  case ncVar nc v of
+    Nothing -> assertBool "missing variable" False
+    Just var -> do
+      eval <- get nc var :: HMVRet a
+      case eval of
+        Left e -> assertBool ("read error: " ++ show e) False
+        Right (H.HVector val) -> do
+          let [nz, ny, nx] = map ncDimLength $ ncVarDims var
+              truevals = [fromIntegral $ ix + 10 * iy + 100 * iz |
+                          ix <- [1..nx], iy <- [1..ny], iz <- [1..nz]]
+              idxs = [(iz - 1) * ny * nx + (iy - 1) * nx + (ix - 1) |
+                      ix <- [1..nx], iy <- [1..ny], iz <- [1..nz]]
+              tstvals = [val C.@> i | i <- idxs]
+          assertBool ("value error: " ++ show tstvals ++
+                      " instead of " ++ show truevals)
             (and $ zipWith (==) tstvals truevals)
   void $ closeFile nc
 
