@@ -5,7 +5,6 @@ module Data.NetCDF.Types where
 
 import Control.Exception
 import Data.Typeable
-import System.FilePath
 import System.IO (IOMode (..))
 
 -- | Representation for NetCDF external data types.

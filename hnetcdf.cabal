@@ -21,6 +21,8 @@ source-repository head
 
 Library
   exposed-modules:     Data.NetCDF
+                       Data.NetCDF.Vector
+                       Data.NetCDF.Repa
                        Data.NetCDF.Metadata
                        Data.NetCDF.PutGet
                        Data.NetCDF.Storable
@@ -31,8 +33,8 @@ Library
                        Data.NetCDF.Raw.Base
                        Data.NetCDF.Raw.PutGet
                        Data.NetCDF.Raw.Attributes
-                       Data.NetCDF.Raw.NetCDF4
                        Data.NetCDF.Raw.Utils
+--                       Data.NetCDF.Raw.NetCDF4
   build-depends:       base                        >= 4.3      && < 5,
                        containers                  >= 0.4      && < 0.6,
                        filepath                    >= 1.3      && < 1.4,
@@ -43,6 +45,7 @@ Library
                        repa                        >= 3.2      && < 3.3
   build-tools:         c2hs
   extra-libraries:     netcdf
+  ghc-options:         -Wall
 
 Test-Suite test-raw-metadata
   type:                exitcode-stdio-1.0

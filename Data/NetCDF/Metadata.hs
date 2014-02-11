@@ -6,7 +6,7 @@
 module Data.NetCDF.Metadata
        ( Name
        , NcDim (..)
-       , NcAttr (..), toAttr, fromAttr
+       , NcAttr (..), ToNcAttr (..), FromNcAttr (..)
        , NcVar (..)
        , NcInfo (..)
        , ncDim, ncAttr, ncVar, ncVarAttr

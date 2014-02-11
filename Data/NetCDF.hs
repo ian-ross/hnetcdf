@@ -1,3 +1,4 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 -- | Bindings to the Unidata NetCDF data access library.
 --
 --   As well as conventional low-level FFI bindings to the functions
@@ -46,7 +47,8 @@ module Data.NetCDF
        , NcStorable (..)
        , IOMode (..)
        , openFile, closeFile, withFile
-       , get1, get, getA, getS ) where
+       , get1, get, getA, getS
+       , coardsScale ) where
 
 import Data.NetCDF.Raw
 import Data.NetCDF.Types
@@ -56,18 +58,16 @@ import Data.NetCDF.Storable
 import Data.NetCDF.Store
 import Data.NetCDF.Utils
 
-import Control.Applicative ((<$>))
 import Control.Exception (bracket)
 import Control.Monad (forM, void)
-import Control.Monad.IO.Class
-import Control.Monad.Trans.Reader
 import Control.Error
-import Data.List
 import qualified Data.Map as M
 import Foreign.C
 import System.IO (IOMode (..))
 
--- | Open a NetCDF file and read all metadata.
+-- | Open a NetCDF file and read all metadata: the returned 'NcInfo'
+-- value contains all the information about dimensions, variables and
+-- attributes in the file.
 openFile :: FilePath -> IOMode -> NcIO NcInfo
 openFile p mode = runAccess "openFile" p $ do
   ncid <- chk $ nc_open p (ncIOMode mode)
@@ -90,10 +90,10 @@ closeFile (NcInfo _ _ _ _ ncid _) = void $ nc_close ncid
 -- function because of error handling.
 withFile :: FilePath -> IOMode
          -> (NcInfo -> IO r) -> (NcError -> IO r) -> IO r
-withFile p m ok err = bracket
-                      (openFile p m)
-                      (either (const $ return ()) closeFile)
-                      (either err ok)
+withFile p m ok e = bracket
+                    (openFile p m)
+                    (either (const $ return ()) closeFile)
+                    (either e ok)
 
 -- | Read a single value from an open NetCDF file.
 get1 :: NcStorable a => NcInfo -> NcVar -> [Int] -> NcIO a
@@ -145,7 +145,7 @@ read1Var ncid dims varid = do
   (n, itype, nvdims, vdimids, nvatts) <- chk $ nc_inq_var ncid varid
   let vdims = map (dims !!) $ take nvdims vdimids
   vattrs <- forM [0..nvatts-1] (read1Attr ncid varid)
-  let vattmap = foldl (\m (n, a) -> M.insert n a m) M.empty vattrs
+  let vattmap = foldl (\m (nm, a) -> M.insert nm a m) M.empty vattrs
   return $ NcVar n (toEnum itype) vdims vattmap
 
 -- | Read an attribute from a NetCDF variable with error handling.
@@ -156,7 +156,7 @@ readAttr nc var n NcInt l = readAttr' nc var n l NcAttrInt nc_get_att_int
 readAttr nc var n NcFloat l = readAttr' nc var n l NcAttrFloat nc_get_att_float
 readAttr nc var n NcDouble l =
   readAttr' nc var n l NcAttrDouble nc_get_att_double
-readAttr _ _ n _ _ = return $ NcAttrInt ([0] :: [CInt])
+readAttr _ _ _ _ _ = return $ NcAttrInt ([0] :: [CInt])
 
 -- | Helper function for attribute reading.
 readAttr' :: Show a => Int -> Int -> String -> Int -> ([a] -> NcAttr)
@@ -166,3 +166,18 @@ readAttr' nc var n l w rf = chk $ do
   return $ (fst tmp, w $ snd tmp)
 
 
+-- | Apply COARDS value scaling.
+coardsScale :: forall a b s. (NcStorable a, NcStorable b, FromNcAttr a,
+                              NcStore s, Real a, Fractional b)
+             => NcVar -> s a -> s b
+coardsScale v din = smap xform din
+  where offset = fromMaybe 0.0 $
+                 ncVarAttr v "add_offset" >>= fromAttr :: CDouble
+        scale = fromMaybe 1.0 $
+                ncVarAttr v "scale_factor" >>= fromAttr :: CDouble
+        fill = ncVarAttr v "_FillValue" >>= fromAttr :: Maybe a
+        xform x = case fill of
+          Nothing -> realToFrac $ realToFrac x * scale + offset
+          Just f -> if x == f
+                    then realToFrac f
+                    else realToFrac $ realToFrac x * scale + offset

@@ -14,12 +14,9 @@ import Foreign.Marshal.Array
 import Foreign.Marshal.Alloc
 import Control.Applicative ((<$>))
 import Control.Monad (liftM)
-import Data.Word
 
-import Data.NetCDF.Types
 import Data.NetCDF.Storable
 import Data.NetCDF.Store
-import Data.NetCDF.Raw.PutGet
 
 put_var1 :: NcStorable a => Int -> Int -> [Int] -> a -> IO Int
 put_var1 nc var idxs v = do

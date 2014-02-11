@@ -11,6 +11,8 @@ import Control.Monad
 
 import Foreign.C
 import Data.NetCDF
+import Data.NetCDF.Vector
+import Data.NetCDF.Repa
 
 main :: IO ()
 main = defaultMain tests

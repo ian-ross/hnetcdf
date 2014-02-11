@@ -11,7 +11,6 @@ import Foreign.Ptr
 import Foreign.Storable
 
 import Data.NetCDF.Types
-import Data.NetCDF.Store
 import Data.NetCDF.Raw.PutGet
 
 
