@@ -14,6 +14,7 @@ import Data.Packed.Foreign
 import Data.Packed.Development
 
 newtype HVector a = HVector (C.Vector a)
+                  deriving (Eq, Show)
 
 instance NcStore HVector where
   toForeignPtr (HVector v) = (\(x, _, _) -> x) $ unsafeToForeignPtr v

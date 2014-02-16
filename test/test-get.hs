@@ -56,6 +56,9 @@ tests =
     , testCase "Read (float, Repa)" (getVarARepa infile "vf" fwit)
     , testCase "Read (int, Repa)" (getVarARepa infile "vi" iwit)
     , testCase "Read (short, Repa)" (getVarARepa infile "vs" swit)
+    , testCase "Read (float, hmatrix)" (getVarAHMV infile "vf" fwit)
+    , testCase "Read (int, hmatrix)" (getVarAHMV infile "vi" iwit)
+    , testCase "Read (short, hmatrix)" (getVarAHMV infile "vs" swit)
     ],
     testGroup "Strided slice access functions"
     [ testCase "Read (float, SV)" (getVarSSV infile "vf" fwit)
@@ -64,6 +67,9 @@ tests =
     , testCase "Read (float, Repa)" (getVarSRepa infile "vf" fwit)
     , testCase "Read (int, Repa)" (getVarSRepa infile "vi" iwit)
     , testCase "Read (short, Repa)" (getVarSRepa infile "vs" swit)
+    , testCase "Read (float, hmatrix)" (getVarSHMV infile "vf" fwit)
+    , testCase "Read (int, hmatrix)" (getVarSHMV infile "vi" iwit)
+    , testCase "Read (short, hmatrix)" (getVarSHMV infile "vs" swit)
     ]
   ]
 
@@ -103,30 +109,6 @@ getVar1 f v _ = do
                             " instead of " ++ show trueval)
                   (val == trueval)
   void $ closeFile nc
-
--- getVar1 :: FilePath -> String -> Assertion
--- getVar1 f v = do
---   enc <- openFile f ReadMode
---   assertBool "failed to open file" $ isRight enc
---   let Right nc = enc
---   case ncVar nc v of
---     Nothing -> assertBool "missing variable" False
---     Just var -> do
---       let [nz, ny, nx] = map ncDimLength $ ncVarDims var
---           typ = ncVarType var
---       forM_ [1..nx] $ \ix -> do
---         forM_ [1..ny] $ \iy -> do
---           forM_ [1..nz] $ \iz -> do
---             eval <- get1 nc var [iz-1, iy-1, ix-1] :: IO (Either NcError a)
---             case eval of
---               Left e -> assertBool ("read error: " ++ show e) False
---               Right val -> do
---                 let trueval = fromIntegral $ ix + 10 * iy + 100 * iz
---                 assertBool ("value error: " ++ show val ++
---                             " instead of " ++ show trueval)
---                   (val == trueval)
---   void $ closeFile nc
-
 
 
 --------------------------------------------------------------------------------
@@ -309,6 +291,53 @@ getVarARepa f v _ = do
               assertBool ("3: value error: " ++ show tstvals ++
                           " instead of " ++ show truevals) (tstvals == truevals)
 
+getVarAHMV :: forall a. (Num a, Show a, Eq a, NcStorable a)
+           => FilePath -> String -> a -> Assertion
+getVarAHMV f v _ = do
+  enc <- openFile f ReadMode
+  assertBool "failed to open file" $ isRight enc
+  let Right nc = enc
+  case ncVar nc v of
+    Nothing -> assertBool "missing variable" False
+    Just var -> do
+      let [nz, ny, nx] = map ncDimLength $ ncVarDims var
+      forM_ [1..nx] $ \ix -> do
+        forM_ [1..ny] $ \iy -> do
+          let start = [0, iy-1, ix-1]
+              count = [nz, 1, 1]
+          eval <- getA nc var start count :: HMVRet a
+          case eval of
+            Left e -> assertBool ("read error: " ++ show e) False
+            Right vals -> do
+              let truevals = H.HVector $ C.buildVector (fromIntegral nz)
+                             (\iz -> fromIntegral $ ix + 10 * iy + 100 * (iz+1))
+              assertBool ("1: value error: " ++ show vals ++
+                          " instead of " ++ show truevals) (vals == truevals)
+      forM_ [1..nx] $ \ix -> do
+        forM_ [1..nz] $ \iz -> do
+          let start = [iz-1, 0, ix-1]
+              count = [1, ny, 1]
+          eval <- getA nc var start count :: HMVRet a
+          case eval of
+            Left e -> assertBool ("read error: " ++ show e) False
+            Right vals -> do
+              let truevals = H.HVector $ C.buildVector (fromIntegral ny)
+                             (\iy -> fromIntegral $ ix + 10 * (iy+1) + 100 * iz)
+              assertBool ("2: value error: " ++ show vals ++
+                          " instead of " ++ show truevals) (vals == truevals)
+      forM_ [1..ny] $ \iy -> do
+        forM_ [1..nz] $ \iz -> do
+          let start = [iz-1, iy-1, 0]
+              count = [1, 1, nx]
+          eval <- getA nc var start count :: HMVRet a
+          case eval of
+            Left e -> assertBool ("read error: " ++ show e) False
+            Right vals -> do
+              let truevals = H.HVector $ C.buildVector (fromIntegral nx)
+                             (\ix -> fromIntegral $ (ix+1) + 10 * iy + 100 * iz)
+              assertBool ("3: value error: " ++ show vals ++
+                          " instead of " ++ show truevals) (vals == truevals)
+
 
 --------------------------------------------------------------------------------
 --
@@ -436,3 +465,62 @@ getVarSRepa f v _ = do
                 assertBool ("3: value error: " ++ show tstvals ++
                             " instead of " ++ show truevals)
                   (tstvals == truevals)
+
+getVarSHMV :: forall a. (Num a, Show a, Eq a, NcStorable a)
+          => FilePath -> String -> a -> Assertion
+getVarSHMV f v _ = do
+  enc <- openFile f ReadMode
+  assertBool "failed to open file" $ isRight enc
+  let Right nc = enc
+  case ncVar nc v of
+    Nothing -> assertBool "missing variable" False
+    Just var -> do
+      let [nz, ny, nx] = map ncDimLength $ ncVarDims var
+      forM_ [1..nx] $ \ix -> do
+        forM_ [1..ny] $ \iy -> do
+          forM_ [1..nz] $ \s -> do
+            let start = [0, iy-1, ix-1]
+                count = [(nz + s - 1) `div` s, 1, 1]
+                stride = [s, 1, 1]
+            eval <- getS nc var start count stride :: HMVRet a
+            case eval of
+              Left e -> assertBool ("read error: " ++ show e) False
+              Right vals -> do
+                let truevals = H.HVector $ C.buildVector
+                               (fromIntegral $ (nz + s - 1) `div` s)
+                               (\iz -> fromIntegral $
+                                       ix + 10 * iy + 100 * (iz * s + 1))
+                assertBool ("1: value error: " ++ show vals ++
+                            " instead of " ++ show truevals) (vals == truevals)
+      forM_ [1..nx] $ \ix -> do
+        forM_ [1..nz] $ \iz -> do
+          forM_ [1..ny] $ \s -> do
+            let start = [iz-1, 0, ix-1]
+                count = [1, (ny + s - 1) `div` s, 1]
+                stride = [1, s, 1]
+            eval <- getS nc var start count stride :: HMVRet a
+            case eval of
+              Left e -> assertBool ("read error: " ++ show e) False
+              Right vals -> do
+                let truevals = H.HVector $ C.buildVector
+                               (fromIntegral $ (ny + s - 1) `div` s)
+                               (\iy -> fromIntegral $
+                                       ix + 10 * (iy * s + 1) + 100 * iz)
+                assertBool ("2: value error: " ++ show vals ++
+                            " instead of " ++ show truevals) (vals == truevals)
+      forM_ [1..ny] $ \iy -> do
+        forM_ [1..nz] $ \iz -> do
+          forM_ [1..nx] $ \s -> do
+            let start = [iz-1, iy-1, 0]
+                count = [1, 1, (nx + s - 1) `div` s]
+                stride = [1, 1, s]
+            eval <- getS nc var start count stride :: HMVRet a
+            case eval of
+              Left e -> assertBool ("read error: " ++ show e) False
+              Right vals -> do
+                let truevals = H.HVector $ C.buildVector
+                               (fromIntegral $ (nx + s - 1) `div` s)
+                               (\ix -> fromIntegral $
+                                       (ix * s + 1) + 10 * iy + 100 * iz)
+                assertBool ("3: value error: " ++ show vals ++
+                            " instead of " ++ show truevals) (vals == truevals)
