@@ -90,7 +90,7 @@ type HMMRet a = IO (Either NcError (H.HRowMajorMatrix a))
 getVar1 :: forall a. (Eq a, Num a, Show a, NcStorable a)
         => FilePath -> String -> a -> Assertion
 getVar1 f v _ = do
-  enc <- openFile f ReadMode
+  enc <- openFile f
   assertBool "failed to open file" $ isRight enc
   let Right nc = enc
   case ncVar nc v of
@@ -120,7 +120,7 @@ getVar1 f v _ = do
 getVarSV :: forall a. (Eq a, Num a, Show a, NcStorable a)
          => FilePath -> String -> a -> Assertion
 getVarSV f v _ = do
-  enc <- openFile f ReadMode
+  enc <- openFile f
   assertBool "failed to open file" $ isRight enc
   let Right nc = enc
   case ncVar nc v of
@@ -144,7 +144,7 @@ getVarSV f v _ = do
 getVarRepa :: forall a. (Eq a, Num a, Show a, NcStorable a)
            => FilePath -> String -> a -> Assertion
 getVarRepa f v _ = do
-  enc <- openFile f ReadMode
+  enc <- openFile f
   assertBool "failed to open file" $ isRight enc
   let Right nc = enc
   case ncVar nc v of
@@ -168,7 +168,7 @@ getVarRepa f v _ = do
 getVarHMV :: forall a. (Eq a, Num a, Show a, NcStorable a)
           => FilePath -> String -> a -> Assertion
 getVarHMV f v _ = do
-  enc <- openFile f ReadMode
+  enc <- openFile f
   assertBool "failed to open file" $ isRight enc
   let Right nc = enc
   case ncVar nc v of
@@ -200,7 +200,7 @@ getVarHMV f v _ = do
 getVarASV :: forall a. (Num a, Show a, Eq a, NcStorable a)
           => FilePath -> String -> a -> Assertion
 getVarASV f v _ = do
-  enc <- openFile f ReadMode
+  enc <- openFile f
   assertBool "failed to open file" $ isRight enc
   let Right nc = enc
   case ncVar nc v of
@@ -247,7 +247,7 @@ getVarASV f v _ = do
 getVarARepa :: forall a. (Num a, Show a, Eq a, NcStorable a)
             => FilePath -> String -> a -> Assertion
 getVarARepa f v _ = do
-  enc <- openFile f ReadMode
+  enc <- openFile f
   assertBool "failed to open file" $ isRight enc
   let Right nc = enc
   case ncVar nc v of
@@ -294,7 +294,7 @@ getVarARepa f v _ = do
 getVarAHMV :: forall a. (Num a, Show a, Eq a, NcStorable a)
            => FilePath -> String -> a -> Assertion
 getVarAHMV f v _ = do
-  enc <- openFile f ReadMode
+  enc <- openFile f
   assertBool "failed to open file" $ isRight enc
   let Right nc = enc
   case ncVar nc v of
@@ -348,7 +348,7 @@ getVarAHMV f v _ = do
 getVarSSV :: forall a. (Num a, Show a, Eq a, NcStorable a)
           => FilePath -> String -> a -> Assertion
 getVarSSV f v _ = do
-  enc <- openFile f ReadMode
+  enc <- openFile f
   assertBool "failed to open file" $ isRight enc
   let Right nc = enc
   case ncVar nc v of
@@ -404,7 +404,7 @@ getVarSSV f v _ = do
 getVarSRepa :: forall a. (Num a, Show a, Eq a, NcStorable a)
             => FilePath -> String -> a -> Assertion
 getVarSRepa f v _ = do
-  enc <- openFile f ReadMode
+  enc <- openFile f
   assertBool "failed to open file" $ isRight enc
   let Right nc = enc
   case ncVar nc v of
@@ -469,7 +469,7 @@ getVarSRepa f v _ = do
 getVarSHMV :: forall a. (Num a, Show a, Eq a, NcStorable a)
           => FilePath -> String -> a -> Assertion
 getVarSHMV f v _ = do
-  enc <- openFile f ReadMode
+  enc <- openFile f
   assertBool "failed to open file" $ isRight enc
   let Right nc = enc
   case ncVar nc v of

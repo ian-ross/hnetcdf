@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, UndecidableInstances #-}
+{-# LANGUAGE FlexibleInstances, UndecidableInstances, EmptyDataDecls #-}
 -- | NetCDF file metadata handling: when a NetCDF file is opened,
 -- metadata defining the dimensions, variables and attributes in the
 -- file are read all at once to create a value of type `NcInfo`.
@@ -8,7 +8,7 @@ module Data.NetCDF.Metadata
        , NcDim (..)
        , NcAttr (..), ToNcAttr (..), FromNcAttr (..)
        , NcVar (..)
-       , NcInfo (..)
+       , NcInfo (..), NcRead, NcWrite
        , ncDim, ncAttr, ncVar, ncVarAttr
        , emptyNcInfo
        , addNcDim, addNcVar, addNcAttr, addNcVarAttr
@@ -107,32 +107,36 @@ data NcVar = NcVar { ncVarName  :: Name
                    , ncVarAttrs :: M.Map Name NcAttr
                    } deriving Show
 
+-- | Type tags for NcInfo values.
+data NcRead
+data NcWrite
+
 -- | Metadata information for a whole NetCDF file.
-data NcInfo = NcInfo { ncName :: FilePath
-                       -- ^ File name.
-                     , ncDims :: M.Map Name NcDim
-                       -- ^ Dimensions defined in file.
-                     , ncVars :: M.Map Name NcVar
-                       -- ^ Variables defined in file.
-                     , ncAttrs :: M.Map Name NcAttr
-                       -- ^ Global attributes defined in file.
-                     , ncId :: NcId
-                       -- ^ Low-level file access ID.
-                     , ncVarIds :: M.Map Name NcId
-                       -- ^ Low-level IDs for variables.
-                     } deriving Show
+data NcInfo a = NcInfo { ncName :: FilePath
+                         -- ^ File name.
+                       , ncDims :: M.Map Name NcDim
+                         -- ^ Dimensions defined in file.
+                       , ncVars :: M.Map Name NcVar
+                         -- ^ Variables defined in file.
+                       , ncAttrs :: M.Map Name NcAttr
+                         -- ^ Global attributes defined in file.
+                       , ncId :: NcId
+                         -- ^ Low-level file access ID.
+                       , ncVarIds :: M.Map Name NcId
+                         -- ^ Low-level IDs for variables.
+                       } deriving Show
 
 
 -- | Extract dimension metadata by name.
-ncDim :: NcInfo -> Name -> Maybe NcDim
+ncDim :: NcInfo a -> Name -> Maybe NcDim
 ncDim nc n = M.lookup n $ ncDims nc
 
 -- | Extract a global attribute by name.
-ncAttr :: NcInfo -> Name -> Maybe NcAttr
+ncAttr :: NcInfo a -> Name -> Maybe NcAttr
 ncAttr nc n = M.lookup n $ ncAttrs nc
 
 -- | Extract variable metadata by name.
-ncVar :: NcInfo -> Name -> Maybe NcVar
+ncVar :: NcInfo a -> Name -> Maybe NcVar
 ncVar nc n = M.lookup n $ ncVars nc
 
 -- | Extract an attribute for a given variable by name.
@@ -141,21 +145,21 @@ ncVarAttr v n = M.lookup n $ ncVarAttrs v
 
 
 -- | Empty NcInfo value to build on.
-emptyNcInfo :: FilePath -> NcInfo
+emptyNcInfo :: FilePath -> NcInfo NcWrite
 emptyNcInfo n = NcInfo n M.empty M.empty M.empty ncInvalidId M.empty
 
 -- | Add a new dimension to an NcInfo value.
-addNcDim :: NcInfo -> Name -> NcDim -> NcInfo
+addNcDim :: NcInfo NcWrite -> Name -> NcDim -> NcInfo NcWrite
 addNcDim (NcInfo n ds vs as fid vids) name dim =
   NcInfo n (M.insert name dim ds) vs as fid vids
 
 -- | Add a new variable to an NcInfo value.
-addNcVar :: NcInfo -> Name -> NcVar -> NcInfo
+addNcVar :: NcInfo NcWrite -> Name -> NcVar -> NcInfo NcWrite
 addNcVar (NcInfo n ds vs as fid vids) name var =
   NcInfo n ds (M.insert name var vs) as fid vids
 
 -- | Add a new global attribute to an NcInfo value.
-addNcAttr :: NcInfo -> Name -> NcAttr -> NcInfo
+addNcAttr :: NcInfo NcWrite -> Name -> NcAttr -> NcInfo NcWrite
 addNcAttr (NcInfo n ds vs as fid vids) name att =
   NcInfo n ds vs (M.insert name att as) fid vids
 

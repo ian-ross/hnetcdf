@@ -17,7 +17,7 @@
 -- > ...
 -- > type SVRet = IO (Either NcError (SV.Vector a))
 -- > ...
--- >   enc <- openFile "tst.nc" ReadMode
+-- >   enc <- openFile "tst.nc"
 -- >   case enc of
 -- >     Right nc -> do
 -- >       eval <- get nc "varname" :: SVRet CDouble
@@ -35,7 +35,7 @@
 -- > ...
 -- > type RepaRet3 a = IO (Either NcError (R.Array F R.DIM3 a))
 -- > ...
--- >   enc <- openFile "tst.nc" ReadMode
+-- >   enc <- openFile "tst.nc"
 -- >   case enc of
 -- >     Right nc -> do
 -- >       eval <- get nc "varname" :: RepaRet3 CDouble
@@ -46,7 +46,8 @@ module Data.NetCDF
        , module Data.NetCDF.Metadata
        , NcStorable (..)
        , IOMode (..)
-       , openFile, closeFile, withFile
+       , openFile, createFile, closeFile
+       , withReadFile, withCreateFile
        , get1, get, getA, getS
        , coardsScale ) where
 
@@ -65,12 +66,12 @@ import qualified Data.Map as M
 import Foreign.C
 import System.IO (IOMode (..))
 
--- | Open a NetCDF file and read all metadata: the returned 'NcInfo'
--- value contains all the information about dimensions, variables and
--- attributes in the file.
-openFile :: FilePath -> IOMode -> NcIO NcInfo
-openFile p mode = runAccess "openFile" p $ do
-  ncid <- chk $ nc_open p (ncIOMode mode)
+-- | Open an existing NetCDF file for read-only access and read all
+-- metadata: the returned 'NcInfo' value contains all the information
+-- about dimensions, variables and attributes in the file.
+openFile :: FilePath -> NcIO (NcInfo NcRead)
+openFile p = runAccess "openFile" p $ do
+  ncid <- chk $ nc_open p (ncIOMode ReadMode)
   (ndims, nvars, nattrs, unlim) <- chk $ nc_inq ncid
   dims <- forM [0..ndims-1] (read1Dim ncid unlim)
   attrs <- forM [0..nattrs-1] (read1Attr ncid ncGlobal)
@@ -82,26 +83,42 @@ openFile p mode = runAccess "openFile" p $ do
       varidmap = M.fromList $ zip (map ncVarName vars) [0..]
   return $ NcInfo p dimmap varmap attmap ncid varidmap
 
+-- | Create a new NetCDF file, ready for write-only access.  The
+-- 'NcInfo' parameter contains all the information about dimensions,
+-- variables and attributes in the file.
+createFile :: NcInfo NcWrite -> NcIO (NcInfo NcWrite)
+createFile nc = runAccess "createFile" (ncName nc) $ do
+  return nc
+
 -- | Close a NetCDF file.
-closeFile :: NcInfo -> IO ()
+closeFile :: NcInfo a -> IO ()
 closeFile (NcInfo _ _ _ _ ncid _) = void $ nc_close ncid
 
--- | Bracket file use: a little different from the standard 'withFile'
--- function because of error handling.
-withFile :: FilePath -> IOMode
-         -> (NcInfo -> IO r) -> (NcError -> IO r) -> IO r
-withFile p m ok e = bracket
-                    (openFile p m)
-                    (either (const $ return ()) closeFile)
-                    (either e ok)
+-- | Bracket read-only file use: a little different from the standard
+-- 'withFile' function because of error handling.
+withReadFile :: FilePath
+             -> (NcInfo NcRead -> IO r) -> (NcError -> IO r) -> IO r
+withReadFile p ok e = bracket
+                      (openFile p)
+                      (either (const $ return ()) closeFile)
+                      (either e ok)
+
+-- | Bracket write-only file use: a little different from the standard
+-- 'withFile' function because of error handling.
+withCreateFile :: NcInfo NcWrite
+               -> (NcInfo NcWrite -> IO r) -> (NcError -> IO r) -> IO r
+withCreateFile nc ok e = bracket
+                         (createFile nc)
+                         (either (const $ return ()) closeFile)
+                         (either e ok)
 
 -- | Read a single value from an open NetCDF file.
-get1 :: NcStorable a => NcInfo -> NcVar -> [Int] -> NcIO a
+get1 :: NcStorable a => NcInfo NcRead -> NcVar -> [Int] -> NcIO a
 get1 nc var idxs = runAccess "get1" (ncName nc) $
   chk $ get_var1 (ncId nc) ((ncVarIds nc) M.! (ncVarName var)) idxs
 
 -- | Read a whole variable from an open NetCDF file.
-get :: (NcStorable a, NcStore s) => NcInfo -> NcVar -> NcIO (s a)
+get :: (NcStorable a, NcStore s) => NcInfo NcRead -> NcVar -> NcIO (s a)
 get nc var = runAccess "get" (ncName nc) $ do
   let ncid = ncId nc
       varid = (ncVarIds nc) M.! (ncVarName var)
@@ -110,7 +127,7 @@ get nc var = runAccess "get" (ncName nc) $ do
 
 -- | Read a slice of a variable from an open NetCDF file.
 getA :: (NcStorable a, NcStore s)
-     => NcInfo -> NcVar -> [Int] -> [Int] -> NcIO (s a)
+     => NcInfo NcRead -> NcVar -> [Int] -> [Int] -> NcIO (s a)
 getA nc var start count = runAccess "getA" (ncName nc) $ do
   let ncid = ncId nc
       varid = (ncVarIds nc) M.! (ncVarName var)
@@ -118,7 +135,7 @@ getA nc var start count = runAccess "getA" (ncName nc) $ do
 
 -- | Read a strided slice of a variable from an open NetCDF file.
 getS :: (NcStorable a, NcStore s)
-     => NcInfo -> NcVar -> [Int] -> [Int] -> [Int] -> NcIO (s a)
+     => NcInfo NcRead -> NcVar -> [Int] -> [Int] -> [Int] -> NcIO (s a)
 getS nc var start count stride = runAccess "getS" (ncName nc) $ do
   let ncid = ncId nc
       varid = (ncVarIds nc) M.! (ncVarName var)
