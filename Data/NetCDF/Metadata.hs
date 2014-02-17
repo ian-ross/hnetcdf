@@ -10,6 +10,8 @@ module Data.NetCDF.Metadata
        , NcVar (..)
        , NcInfo (..)
        , ncDim, ncAttr, ncVar, ncVarAttr
+       , emptyNcInfo
+       , addNcDim, addNcVar, addNcAttr, addNcVarAttr
        ) where
 
 import Data.NetCDF.Types
@@ -136,3 +138,27 @@ ncVar nc n = M.lookup n $ ncVars nc
 -- | Extract an attribute for a given variable by name.
 ncVarAttr :: NcVar -> Name -> Maybe NcAttr
 ncVarAttr v n = M.lookup n $ ncVarAttrs v
+
+
+-- | Empty NcInfo value to build on.
+emptyNcInfo :: FilePath -> NcInfo
+emptyNcInfo n = NcInfo n M.empty M.empty M.empty ncInvalidId M.empty
+
+-- | Add a new dimension to an NcInfo value.
+addNcDim :: NcInfo -> Name -> NcDim -> NcInfo
+addNcDim (NcInfo n ds vs as fid vids) name dim =
+  NcInfo n (M.insert name dim ds) vs as fid vids
+
+-- | Add a new variable to an NcInfo value.
+addNcVar :: NcInfo -> Name -> NcVar -> NcInfo
+addNcVar (NcInfo n ds vs as fid vids) name var =
+  NcInfo n ds (M.insert name var vs) as fid vids
+
+-- | Add a new global attribute to an NcInfo value.
+addNcAttr :: NcInfo -> Name -> NcAttr -> NcInfo
+addNcAttr (NcInfo n ds vs as fid vids) name att =
+  NcInfo n ds vs (M.insert name att as) fid vids
+
+-- | Add a new attribute to an NcVar value.
+addNcVarAttr :: NcVar -> Name -> NcAttr -> NcVar
+addNcVarAttr (NcVar n t ds as) name att = NcVar n t ds (M.insert name att as)

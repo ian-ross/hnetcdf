@@ -54,3 +54,7 @@ ncIOMode _ = throw (NcInvalidArgs "IO mode")
 -- | Fake variable identifier for global attributes.
 ncGlobal :: Int
 ncGlobal = -1
+
+-- | Fake file identifier for unopened files.
+ncInvalidId :: NcId
+ncInvalidId = -1
