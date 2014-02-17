@@ -26,6 +26,11 @@ class Checkable a where
   status :: a -> Int
   proj :: a -> OutType a
 
+instance Checkable Int where
+  type OutType Int = ()
+  status s = s
+  proj _ = ()
+
 instance Checkable (Int, a) where
   type OutType (Int, a) = a
   status (s, _) = s

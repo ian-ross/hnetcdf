@@ -49,6 +49,7 @@ module Data.NetCDF
        , openFile, createFile, closeFile
        , withReadFile, withCreateFile
        , get1, get, getA, getS
+       , put1, put, putA, putS
        , coardsScale ) where
 
 import Data.NetCDF.Raw
@@ -140,6 +141,35 @@ getS nc var start count stride = runAccess "getS" (ncName nc) $ do
   let ncid = ncId nc
       varid = (ncVarIds nc) M.! (ncVarName var)
   chk $ get_vars ncid varid start count stride
+
+
+-- | Write a single value to an open NetCDF file.
+put1 :: NcStorable a => NcInfo NcWrite -> NcVar -> [Int] -> a -> NcIO ()
+put1 nc var idxs val = runAccess "put1" (ncName nc) $
+  chk $ put_var1 (ncId nc) ((ncVarIds nc) M.! (ncVarName var)) idxs val
+
+-- | Write a whole variable to an open NetCDF file.
+put :: (NcStorable a, NcStore s) => NcInfo NcWrite -> NcVar -> s a -> NcIO ()
+put nc var val = runAccess "put" (ncName nc) $ do
+  let ncid = ncId nc
+      varid = (ncVarIds nc) M.! (ncVarName var)
+  chk $ put_var ncid varid val
+
+-- | Write a slice of a variable to an open NetCDF file.
+putA :: (NcStorable a, NcStore s)
+     => NcInfo NcWrite -> NcVar -> [Int] -> [Int] -> s a -> NcIO ()
+putA nc var start count val = runAccess "putA" (ncName nc) $ do
+  let ncid = ncId nc
+      varid = (ncVarIds nc) M.! (ncVarName var)
+  chk $ put_vara ncid varid start count val
+
+-- | Write a strided slice of a variable to an open NetCDF file.
+putS :: (NcStorable a, NcStore s)
+     => NcInfo NcWrite -> NcVar -> [Int] -> [Int] -> [Int] -> s a -> NcIO ()
+putS nc var start count stride val = runAccess "putS" (ncName nc) $ do
+  let ncid = ncId nc
+      varid = (ncVarIds nc) M.! (ncVarName var)
+  chk $ put_vars ncid varid start count stride val
 
 
 -- | Helper function to read a single NC dimension.
