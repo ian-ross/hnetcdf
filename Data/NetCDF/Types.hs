@@ -55,6 +55,10 @@ ncIOMode _ = throw (NcInvalidArgs "IO mode")
 ncGlobal :: Int
 ncGlobal = -1
 
+-- | Fake length value for defining unlimited dimensions.
+ncUnlimitedLength :: Int
+ncUnlimitedLength = 0
+
 -- | Fake file identifier for unopened files.
 ncInvalidId :: NcId
 ncInvalidId = -1

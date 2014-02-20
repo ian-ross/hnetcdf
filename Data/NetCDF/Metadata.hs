@@ -151,7 +151,10 @@ emptyNcInfo n = NcInfo n M.empty M.empty M.empty ncInvalidId M.empty
 -- | Add a new dimension to an NcInfo value.
 addNcDim :: NcInfo NcWrite -> Name -> NcDim -> NcInfo NcWrite
 addNcDim (NcInfo n ds vs as fid vids) name dim =
-  NcInfo n (M.insert name dim ds) vs as fid vids
+  NcInfo n (M.insert name chkdim ds) vs as fid vids
+  where chkdim = dim { ncDimUnlimited =
+                          ncDimUnlimited dim &&
+                          (not . or . (map ncDimUnlimited) . M.elems $ ds) }
 
 -- | Add a new variable to an NcInfo value.
 addNcVar :: NcInfo NcWrite -> Name -> NcVar -> NcInfo NcWrite

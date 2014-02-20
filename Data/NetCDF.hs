@@ -61,7 +61,7 @@ import Data.NetCDF.Store
 import Data.NetCDF.Utils
 
 import Control.Exception (bracket)
-import Control.Monad (forM, void)
+import Control.Monad (forM, forM_, void)
 import Control.Error
 import qualified Data.Map as M
 import Foreign.C
@@ -88,8 +88,15 @@ openFile p = runAccess "openFile" p $ do
 -- 'NcInfo' parameter contains all the information about dimensions,
 -- variables and attributes in the file.
 createFile :: NcInfo NcWrite -> NcIO (NcInfo NcWrite)
-createFile nc = runAccess "createFile" (ncName nc) $ do
-  return nc
+createFile (NcInfo n ds vs as _ _) = runAccess "createFile" n $ do
+  ncid <- chk $ nc_create n (ncIOMode WriteMode)
+  newds <- forM (M.toList ds) (write1Dim ncid . snd)
+  let dimids = M.fromList $ zip (M.keys ds) newds
+  forM_ (M.toList as) (write1Attr ncid ncGlobal)
+  newvs <- forM (M.toList vs) (write1Var ncid dimids . snd)
+  let varids = M.fromList $ zip (M.keys vs) newvs
+  chk $ nc_enddef ncid
+  return $ NcInfo n ds vs as ncid varids
 
 -- | Close a NetCDF file.
 closeFile :: NcInfo a -> IO ()
@@ -178,6 +185,11 @@ read1Dim ncid unlim dimid = do
   (name, len) <- chk $ nc_inq_dim ncid dimid
   return $ NcDim name len (dimid == unlim)
 
+-- | Helper function to write a single NC dimension.
+write1Dim :: Int -> NcDim -> Access Int
+write1Dim ncid (NcDim name len unlim) = do
+  chk $ nc_def_dim ncid name (if unlim then ncUnlimitedLength else len)
+
 -- | Helper function to read a single NC attribute.
 read1Attr :: Int -> Int -> Int -> Access (Name, NcAttr)
 read1Attr ncid varid attid = do
@@ -185,6 +197,10 @@ read1Attr ncid varid attid = do
   (itype, len) <- chk $ nc_inq_att ncid varid n
   a <- readAttr ncid varid n (toEnum itype) len
   return (n, a)
+
+-- | Helper function to write a single NC attribute.
+write1Attr :: Int -> Int -> (Name, NcAttr) -> Access ()
+write1Attr ncid varid (n, a) = writeAttr ncid varid n a
 
 -- | Helper function to read metadata for a single NC variable.
 read1Var :: Int -> [NcDim] -> Int -> Access NcVar
@@ -195,15 +211,24 @@ read1Var ncid dims varid = do
   let vattmap = foldl (\m (nm, a) -> M.insert nm a m) M.empty vattrs
   return $ NcVar n (toEnum itype) vdims vattmap
 
+-- | Helper function to write metadata for a single NC variable.
+write1Var :: Int -> M.Map Name Int -> NcVar -> Access Int
+write1Var ncid dimidmap (NcVar n t dims as) = do
+  let dimids = map ((dimidmap M.!) . ncDimName) dims
+  varid <- chk $ nc_def_var ncid n (fromEnum t) (length dims) dimids
+  forM_ (M.toList as) (write1Attr ncid varid)
+  return varid
+
 -- | Read an attribute from a NetCDF variable with error handling.
 readAttr :: Int -> Int -> String -> NcType -> Int -> Access NcAttr
+readAttr nc var n NcByte l =
+  readAttr' nc var n l (NcAttrByte . map fromIntegral) nc_get_att_uchar
 readAttr nc var n NcChar l = readAttr' nc var n l NcAttrChar nc_get_att_text
 readAttr nc var n NcShort l = readAttr' nc var n l NcAttrShort nc_get_att_short
 readAttr nc var n NcInt l = readAttr' nc var n l NcAttrInt nc_get_att_int
 readAttr nc var n NcFloat l = readAttr' nc var n l NcAttrFloat nc_get_att_float
 readAttr nc var n NcDouble l =
   readAttr' nc var n l NcAttrDouble nc_get_att_double
-readAttr _ _ _ _ _ = return $ NcAttrInt ([0] :: [CInt])
 
 -- | Helper function for attribute reading.
 readAttr' :: Show a => Int -> Int -> String -> Int -> ([a] -> NcAttr)
@@ -211,6 +236,24 @@ readAttr' :: Show a => Int -> Int -> String -> Int -> ([a] -> NcAttr)
 readAttr' nc var n l w rf = chk $ do
   tmp <- rf nc var n l
   return $ (fst tmp, w $ snd tmp)
+
+-- | Write an attribute to a NetCDF variable with error handling.
+writeAttr :: Int -> Int -> String -> NcAttr -> Access ()
+writeAttr nc var n (NcAttrByte v) = writeAttr' nc var n id v nc_put_att_uchar
+writeAttr nc var n (NcAttrChar v) = writeAttr' nc var n id v nc_put_att_text
+writeAttr nc var n (NcAttrShort v) =
+  writeAttr' nc var n fromIntegral v nc_put_att_short
+writeAttr nc var n (NcAttrInt v) =
+  writeAttr' nc var n fromIntegral v nc_put_att_int
+writeAttr nc var n (NcAttrFloat v) =
+  writeAttr' nc var n realToFrac v nc_put_att_float
+writeAttr nc var n (NcAttrDouble v) =
+  writeAttr' nc var n realToFrac v nc_put_att_double
+
+-- | Helper function for attribute writeing.
+writeAttr' :: Int -> Int -> String -> (a -> b) -> [a]
+          -> (Int -> Int -> String -> Int -> [b] -> IO Int) -> Access ()
+writeAttr' nc var n conv vs wf = chk $ wf nc var n (length vs) (map conv vs)
 
 
 -- | Apply COARDS value scaling.
