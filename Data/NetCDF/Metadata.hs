@@ -11,7 +11,7 @@ module Data.NetCDF.Metadata
        , NcInfo (..), NcRead, NcWrite
        , ncDim, ncAttr, ncVar, ncVarAttr
        , emptyNcInfo
-       , addNcDim, addNcVar, addNcAttr, addNcVarAttr
+       , addNcDim, addNcVar, addNcAttr, addNcVarAttr, (#)
        ) where
 
 import Data.NetCDF.Types
@@ -149,23 +149,29 @@ emptyNcInfo :: FilePath -> NcInfo NcWrite
 emptyNcInfo n = NcInfo n M.empty M.empty M.empty ncInvalidId M.empty
 
 -- | Add a new dimension to an NcInfo value.
-addNcDim :: NcInfo NcWrite -> Name -> NcDim -> NcInfo NcWrite
-addNcDim (NcInfo n ds vs as fid vids) name dim =
+addNcDim :: NcDim -> NcInfo NcWrite -> NcInfo NcWrite
+addNcDim dim@(NcDim name _ _) (NcInfo n ds vs as fid vids) =
   NcInfo n (M.insert name chkdim ds) vs as fid vids
   where chkdim = dim { ncDimUnlimited =
                           ncDimUnlimited dim &&
                           (not . or . (map ncDimUnlimited) . M.elems $ ds) }
 
 -- | Add a new variable to an NcInfo value.
-addNcVar :: NcInfo NcWrite -> Name -> NcVar -> NcInfo NcWrite
-addNcVar (NcInfo n ds vs as fid vids) name var =
+addNcVar :: NcVar -> NcInfo NcWrite -> NcInfo NcWrite
+addNcVar var@(NcVar name _ _ _) (NcInfo n ds vs as fid vids) =
   NcInfo n ds (M.insert name var vs) as fid vids
 
 -- | Add a new global attribute to an NcInfo value.
-addNcAttr :: NcInfo NcWrite -> Name -> NcAttr -> NcInfo NcWrite
-addNcAttr (NcInfo n ds vs as fid vids) name att =
+addNcAttr :: Name -> NcAttr -> NcInfo NcWrite -> NcInfo NcWrite
+addNcAttr name att (NcInfo n ds vs as fid vids) =
   NcInfo n ds vs (M.insert name att as) fid vids
 
 -- | Add a new attribute to an NcVar value.
-addNcVarAttr :: NcVar -> Name -> NcAttr -> NcVar
-addNcVarAttr (NcVar n t ds as) name att = NcVar n t ds (M.insert name att as)
+addNcVarAttr :: Name -> NcAttr -> NcVar -> NcVar
+addNcVarAttr name att (NcVar n t ds as) = NcVar n t ds (M.insert name att as)
+
+infixl 8 #
+
+-- | Handy postfix function application.
+(#) :: a -> (a -> b) -> b
+(#) = flip ($)

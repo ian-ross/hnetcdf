@@ -118,3 +118,15 @@ Test-Suite test-get
                        QuickCheck
   extra-libraries:     netcdf
 
+Test-Suite test-put
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      test
+  main-is:             test-put.hs
+  build-depends:       hnetcdf,
+                       base                        >= 4.3      && < 5,
+                       containers                  >= 0.4      && < 0.6,
+                       errors                      >= 1.4.2    && < 1.5,
+                       vector                      >= 0.9      && < 0.11,
+                       directory                   >= 1.1      && < 1.3
+  extra-libraries:     netcdf
+
