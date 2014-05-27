@@ -4,7 +4,7 @@ language: haskell
 before_install:
  - sudo apt-get update -qq
  - sudo apt-get install -qq libnetcdf-dev libgsl0-dev liblapack-dev
- - cabal install --only-dependencies --enable-tests
+ - cabal install --only-dependencies --enable-tests --reorder-goals
  - cabal install c2hs
 
 install: true
