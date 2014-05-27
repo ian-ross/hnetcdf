@@ -1,5 +1,5 @@
 name:                hnetcdf
-version:             0.1.0.0
+version:             0.2.0.0
 synopsis:            Haskell NetCDF library
 description:
   Bindings to the Unidata NetCDF library, along with a higher-level
@@ -12,6 +12,7 @@ maintainer:          ian@skybluetrades.net
 copyright:           Copyright (2013) Ian Ross
 category:            Data
 build-type:          Simple
+extra-source-files:  README.markdown CHANGELOG.markdown
 cabal-version:       >=1.8
 homepage:            https://github.com/ian-ross/hnetcdf
 

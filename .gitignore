@@ -8,3 +8,5 @@ cabal-dev
 /hsenv.log
 /test/tmp-tst-var1.nc
 /test/tmp-tst-raw-get-put.nc
+/.cabal-sandbox/*
+/cabal.sandbox.config
