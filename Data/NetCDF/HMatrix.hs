@@ -25,16 +25,20 @@ newtype HRowMajorMatrix a = HRowMajorMatrix (C.Matrix a)
 
 instance NcStore HRowMajorMatrix where
   toForeignPtr (HRowMajorMatrix m) = fst $ unsafeMatrixToForeignPtr m
-  fromForeignPtr p s = HRowMajorMatrix $
-                       matrixFromVector RowMajor (last s) $
-                       unsafeFromForeignPtr p 0 (Prelude.product s)
+  fromForeignPtr p s =
+    let c = last s
+        d = product s
+    in HRowMajorMatrix $ matrixFromVector RowMajor (d `div` c) (last s) $
+       unsafeFromForeignPtr p 0 (Prelude.product s)
   smap f (HRowMajorMatrix m) = HRowMajorMatrix $ C.mapMatrix f m
 
 newtype HColumnMajorMatrix a = HColumnMajorMatrix (C.Matrix a)
 
 instance NcStore HColumnMajorMatrix where
   toForeignPtr (HColumnMajorMatrix m) = fst $ unsafeMatrixToForeignPtr m
-  fromForeignPtr p s = HColumnMajorMatrix $
-                       matrixFromVector ColumnMajor (last s) $
-                       unsafeFromForeignPtr p 0 (Prelude.product s)
+  fromForeignPtr p s =
+    let c = last s
+        d = product s
+    in HColumnMajorMatrix $ matrixFromVector ColumnMajor (d `div` c) (last s) $
+       unsafeFromForeignPtr p 0 (Prelude.product s)
   smap f (HColumnMajorMatrix m) = HColumnMajorMatrix $ C.mapMatrix f m
