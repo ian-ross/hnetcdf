@@ -10,3 +10,6 @@ cabal-dev
 /test/tmp-tst-raw-get-put.nc
 /.cabal-sandbox/*
 /cabal.sandbox.config
+/examples/example1
+/examples/example2
+/examples/example3
