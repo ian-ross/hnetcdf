@@ -48,5 +48,6 @@ instance C.Element CShort
 instance C.Element CInt
 instance C.Element CFloat
 instance C.Element CDouble
+
 instance C.Container C.Vector CFloat
 instance C.Container C.Vector CDouble

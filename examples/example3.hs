@@ -1,6 +1,6 @@
 module Main where
 
-import Prelude hiding (length, maximum, minimum, sum)
+import Prelude hiding (length, sum)
 import Control.Applicative ((<$>))
 import Data.NetCDF
 import Data.NetCDF.HMatrix

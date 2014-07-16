@@ -130,3 +130,29 @@ Test-Suite test-put
                        vector                      >= 0.9      && < 0.11,
                        directory                   >= 1.1      && < 1.3
   extra-libraries:     netcdf
+
+Executable example1
+  hs-source-dirs:   examples
+  main-is:          example1.hs
+  build-depends:    hnetcdf,
+                    base                           >= 4.3      && < 5,
+                    containers                     >= 0.4      && < 0.6,
+                    vector                         >= 0.9      && < 0.11
+
+Executable example2
+  hs-source-dirs:   examples
+  main-is:          example2.hs
+  build-depends:    hnetcdf,
+                    base                           >= 4.3      && < 5,
+                    containers                     >= 0.4      && < 0.6,
+                    vector                         >= 0.9      && < 0.11,
+                    repa
+
+Executable example3
+  hs-source-dirs:   examples
+  main-is:          example3.hs
+  build-depends:    hnetcdf,
+                    base                           >= 4.3      && < 5,
+                    containers                     >= 0.4      && < 0.6,
+                    vector                         >= 0.9      && < 0.11,
+                    hmatrix
