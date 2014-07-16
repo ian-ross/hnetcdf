@@ -10,7 +10,7 @@ module Data.NetCDF.Raw.Utils
        ) where
 
 import Control.Monad (liftM)
-import Foreign
+import Foreign hiding (unsafePerformIO)
 import Foreign.C
 import System.IO.Unsafe (unsafePerformIO)
 
