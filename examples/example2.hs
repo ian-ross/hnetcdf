@@ -22,7 +22,7 @@ type RepaRet1 a = IO (Either NcError (Repa.Array F Repa.DIM1 a))
 
 main :: IO ()
 main = do
-  Right nc <- openFile "/big/data/reanalysis/ERA-Interim/z500-1.nc"
+  Right nc <- openFile "z500-short.nc"
 
   let Just ntime = ncDimLength <$> ncDim nc "time"
       Just nlat = ncDimLength <$> ncDim nc "latitude"

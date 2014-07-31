@@ -15,7 +15,7 @@ type MRet a = IO (Either NcError (HRowMajorMatrix a))
 main :: IO ()
 main = do
   -- Open file and access some basic metadata.
-  Right nc <- openFile "/big/data/reanalysis/ERA-Interim/z500-1.nc"
+  Right nc <- openFile "z500-short.nc"
   putStrLn $ "Name: " ++ ncName nc
   putStrLn $ "Dims: " ++ show (M.keys $ ncDims nc)
   putStr $ unlines $ map (\(n, s) -> "  " ++ n ++ ": " ++ s) $
