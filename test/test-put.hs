@@ -14,12 +14,15 @@ main :: IO ()
 main = do
   let xdim = NcDim "x" 10 False
       ydim = NcDim "y" 10 False
+      xattrs = M.fromList [("attr", NcAttrFloat [0.1, 0.2]),
+                           ("name", NcAttrChar "xvar")]
       nc = emptyNcInfo "tst-put.nc" #
            addNcDim xdim #
            addNcDim ydim #
-           addNcVar (NcVar "x" NcDouble [xdim] M.empty) #
+           addNcVar (NcVar "x" NcDouble [xdim] xattrs) #
            addNcVar (NcVar "y" NcDouble [ydim] M.empty) #
            addNcVar (NcVar "z" NcDouble [xdim, ydim] M.empty)
+  putStrLn $ show xattrs
   let write nc = do
         let xvar = fromJust $ ncVar nc "x"
             yvar = fromJust $ ncVar nc "y"

@@ -62,6 +62,7 @@ import Data.NetCDF.Utils
 
 import Control.Exception (bracket)
 import Control.Monad (forM, forM_, void)
+import Control.Monad.IO.Class
 import Control.Error
 import qualified Data.Map as M
 import Foreign.C
@@ -214,9 +215,13 @@ read1Var ncid dims varid = do
 -- | Helper function to write metadata for a single NC variable.
 write1Var :: Int -> M.Map Name Int -> NcVar -> Access Int
 write1Var ncid dimidmap (NcVar n t dims as) = do
+  liftIO $ putStrLn $ "write1Var: " ++ n
   let dimids = map ((dimidmap M.!) . ncDimName) dims
   varid <- chk $ nc_def_var ncid n (fromEnum t) (length dims) dimids
-  forM_ (M.toList as) (write1Attr ncid varid)
+  liftIO $ putStrLn $ "varid=" ++ show varid
+  forM_ (M.toList as) $ \a -> do
+    liftIO $ putStrLn $ "a=" ++ show a
+    write1Attr ncid varid a
   return varid
 
 -- | Read an attribute from a NetCDF variable with error handling.
@@ -239,21 +244,23 @@ readAttr' nc var n l w rf = chk $ do
 
 -- | Write an attribute to a NetCDF variable with error handling.
 writeAttr :: Int -> Int -> String -> NcAttr -> Access ()
-writeAttr nc var n (NcAttrByte v) = writeAttr' nc var n id v nc_put_att_uchar
-writeAttr nc var n (NcAttrChar v) = writeAttr' nc var n id v nc_put_att_text
+writeAttr nc var n (NcAttrByte v) =
+  writeAttr' nc var n NcByte id v nc_put_att_uchar
+writeAttr nc var n (NcAttrChar v) =
+  writeAttr' nc var n NcChar id v nc_put_att_text
 writeAttr nc var n (NcAttrShort v) =
-  writeAttr' nc var n fromIntegral v nc_put_att_short
+  writeAttr' nc var n NcShort fromIntegral v nc_put_att_short
 writeAttr nc var n (NcAttrInt v) =
-  writeAttr' nc var n fromIntegral v nc_put_att_int
+  writeAttr' nc var n NcInt fromIntegral v nc_put_att_int
 writeAttr nc var n (NcAttrFloat v) =
-  writeAttr' nc var n realToFrac v nc_put_att_float
+  writeAttr' nc var n NcFloat realToFrac v nc_put_att_float
 writeAttr nc var n (NcAttrDouble v) =
-  writeAttr' nc var n realToFrac v nc_put_att_double
+  writeAttr' nc var n NcDouble realToFrac v nc_put_att_double
 
 -- | Helper function for attribute writeing.
-writeAttr' :: Int -> Int -> String -> (a -> b) -> [a]
+writeAttr' :: Int -> Int -> String -> NcType -> (a -> b) -> [a]
           -> (Int -> Int -> String -> Int -> [b] -> IO Int) -> Access ()
-writeAttr' nc var n conv vs wf = chk $ wf nc var n (length vs) (map conv vs)
+writeAttr' nc var n t conv vs wf = chk $ wf nc var n (fromEnum t) (map conv vs)
 
 
 -- | Apply COARDS value scaling.

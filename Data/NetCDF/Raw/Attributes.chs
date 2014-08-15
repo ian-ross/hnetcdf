@@ -5,13 +5,12 @@
 module Data.NetCDF.Raw.Attributes where
 
 import Data.Char
-import Control.Monad (liftM)
 
 import Data.NetCDF.Raw.Utils
 
 #include <netcdf.h>
 
-nc_put_att :: (Storable a, Storable b) =>
+nc_put_att :: (Storable a, Storable b, Show b) =>
               (CInt -> CInt -> CString -> CInt -> CULong -> Ptr b -> IO CInt)
             -> (a -> b) -> Int -> Int -> String -> Int -> [a] -> IO Int
 nc_put_att cfn conv nc var name xtype v = do
@@ -19,8 +18,14 @@ nc_put_att cfn conv nc var name xtype v = do
       varid = fromIntegral var
       ncxtype = fromIntegral xtype
       ncsize = fromIntegral $ length v
+  putStrLn $ "ncid=" ++ show ncid
+  putStrLn $ "varid=" ++ show varid
+  putStrLn $ "ncxtype=" ++ show ncxtype
+  putStrLn $ "ncsize=" ++ show ncsize
+  let tv = map conv v
+  putStrLn $ "tv=" ++ show tv
   withCString name $ \namep -> do
-    (withArray . liftM conv) v $ \vp -> do
+    withArray tv $ \vp -> do
       res <- cfn ncid varid namep ncxtype ncsize vp
       return $ fromIntegral res
 
