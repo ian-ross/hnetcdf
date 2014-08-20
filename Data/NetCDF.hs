@@ -62,7 +62,6 @@ import Data.NetCDF.Utils
 
 import Control.Exception (bracket)
 import Control.Monad (forM, forM_, void)
-import Control.Monad.IO.Class
 import Control.Error
 import qualified Data.Map as M
 import Foreign.C
@@ -215,13 +214,9 @@ read1Var ncid dims varid = do
 -- | Helper function to write metadata for a single NC variable.
 write1Var :: Int -> M.Map Name Int -> NcVar -> Access Int
 write1Var ncid dimidmap (NcVar n t dims as) = do
-  liftIO $ putStrLn $ "write1Var: " ++ n
   let dimids = map ((dimidmap M.!) . ncDimName) dims
   varid <- chk $ nc_def_var ncid n (fromEnum t) (length dims) dimids
-  liftIO $ putStrLn $ "varid=" ++ show varid
-  forM_ (M.toList as) $ \a -> do
-    liftIO $ putStrLn $ "a=" ++ show a
-    write1Attr ncid varid a
+  forM_ (M.toList as) $ write1Attr ncid varid
   return varid
 
 -- | Read an attribute from a NetCDF variable with error handling.

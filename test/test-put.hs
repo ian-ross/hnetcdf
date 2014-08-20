@@ -22,7 +22,6 @@ main = do
            addNcVar (NcVar "x" NcDouble [xdim] xattrs) #
            addNcVar (NcVar "y" NcDouble [ydim] M.empty) #
            addNcVar (NcVar "z" NcDouble [xdim, ydim] M.empty)
-  putStrLn $ show xattrs
   let write nc = do
         let xvar = fromJust $ ncVar nc "x"
             yvar = fromJust $ ncVar nc "y"

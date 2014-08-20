@@ -10,6 +10,30 @@ import Data.NetCDF.Raw.Utils
 
 #include <netcdf.h>
 
+-- nc_put_att_text has to be treated seperately since it has a
+-- different calling sequence to all the other
+-- nc_put_att_... functions.
+
+-- int nc_put_att_text(int ncid, int varid, const char *name,
+--                     size_t len, const char *op);
+nc_put_att_text :: Int -> Int -> String -> Int -> String -> IO Int
+nc_put_att_text nc var name xtype v = do
+  let ncid = fromIntegral nc
+      varid = fromIntegral var
+      ncxtype = fromIntegral xtype
+      ncsize = fromIntegral $ length v
+  let tv = map convChar v
+  withCString name $ \namep -> do
+    withCString tv $ \vp -> do
+      res <- nc_put_att_text'_ ncid varid namep ncsize vp
+      return $ fromIntegral res
+  where convChar c
+          | isAscii c = c
+          | otherwise = ' '
+foreign import ccall safe "Data/NetCDF/Raw.chs.h nc_put_att_text"
+  nc_put_att_text'_ :: CInt -> CInt -> CString -> CULong
+                     -> Ptr CChar -> IO CInt
+
 nc_put_att :: (Storable a, Storable b, Show b) =>
               (CInt -> CInt -> CString -> CInt -> CULong -> Ptr b -> IO CInt)
             -> (a -> b) -> Int -> Int -> String -> Int -> [a] -> IO Int
@@ -18,27 +42,11 @@ nc_put_att cfn conv nc var name xtype v = do
       varid = fromIntegral var
       ncxtype = fromIntegral xtype
       ncsize = fromIntegral $ length v
-  putStrLn $ "ncid=" ++ show ncid
-  putStrLn $ "varid=" ++ show varid
-  putStrLn $ "ncxtype=" ++ show ncxtype
-  putStrLn $ "ncsize=" ++ show ncsize
   let tv = map conv v
-  putStrLn $ "tv=" ++ show tv
   withCString name $ \namep -> do
     withArray tv $ \vp -> do
       res <- cfn ncid varid namep ncxtype ncsize vp
       return $ fromIntegral res
-
--- int nc_put_att_text(int ncid, int varid, const char *name, nc_type xtype,
---                     size_t len, const char *op);
-nc_put_att_text :: Int -> Int -> String -> Int -> String -> IO Int
-nc_put_att_text = nc_put_att nc_put_att_text'_ convChar
-  where convChar c
-          | isAscii c = fromIntegral (ord c)
-          | otherwise = 32
-foreign import ccall safe "Data/NetCDF/Raw.chs.h nc_put_att_text"
-  nc_put_att_text'_ :: CInt -> CInt -> CString -> CInt -> CULong
-                     -> Ptr CChar -> IO CInt
 
 -- int nc_put_att_uchar(int ncid, int varid, const char *name, nc_type xtype,
 --                      size_t len, const unsigned char *op);
