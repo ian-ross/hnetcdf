@@ -46,7 +46,7 @@ module Data.NetCDF
        , module Data.NetCDF.Metadata
        , NcStorable (..)
        , IOMode (..)
-       , openFile, createFile, closeFile
+       , openFile, createFile, syncFile, closeFile
        , withReadFile, withCreateFile
        , get1, get, getA, getS
        , put1, put, putA, putS
@@ -97,6 +97,10 @@ createFile (NcInfo n ds vs as _ _) = runAccess "createFile" n $ do
   let varids = M.fromList $ zip (M.keys vs) newvs
   chk $ nc_enddef ncid
   return $ NcInfo n ds vs as ncid varids
+
+-- | Sync a NetCDF file.
+syncFile :: NcInfo NcWrite -> IO ()
+syncFile (NcInfo _ _ _ _ ncid _) = void $ nc_sync ncid
 
 -- | Close a NetCDF file.
 closeFile :: NcInfo a -> IO ()
