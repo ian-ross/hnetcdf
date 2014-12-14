@@ -15,10 +15,12 @@ build-type:          Simple
 extra-source-files:  README.markdown CHANGELOG.markdown
 cabal-version:       >=1.8
 homepage:            https://github.com/ian-ross/hnetcdf
+data-files:          test/tst-raw-get-put.nc test/tst-bathymetry.nc
 
 source-repository head
   type:     git
   location: https://github.com/ian-ross/hnetcdf
+
 
 Library
   exposed-modules:     Data.NetCDF
