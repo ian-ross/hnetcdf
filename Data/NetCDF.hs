@@ -89,7 +89,7 @@ openFile p = runAccess "openFile" p $ do
 -- variables and attributes in the file.
 createFile :: NcInfo NcWrite -> NcIO (NcInfo NcWrite)
 createFile (NcInfo n ds vs as _ _) = runAccess "createFile" n $ do
-  ncid <- chk $ nc_create n (ncIOMode WriteMode)
+  ncid <- chk $ nc_create n ncClobber
   newds <- forM (M.toList ds) (write1Dim ncid . snd)
   let dimids = M.fromList $ zip (M.keys ds) newds
   forM_ (M.toList as) (write1Attr ncid ncGlobal)
