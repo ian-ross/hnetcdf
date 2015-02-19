@@ -62,3 +62,12 @@ ncUnlimitedLength = 0
 -- | Fake file identifier for unopened files.
 ncInvalidId :: NcId
 ncInvalidId = -1
+
+-- | 'mode' flags for nc_create (see netcdf.h)
+ncClobber, ncNoClobber, nc64bitOffset, ncNetCDF4, ncClassicModel :: Int
+ncClobber      = 0
+ncNoClobber    = 0x0004
+nc64bitOffset  = 0x0200
+ncNetCDF4      = 0x1000
+ncClassicModel = 0x0100
+
