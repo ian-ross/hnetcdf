@@ -10,8 +10,10 @@ module Data.NetCDF.HMatrix
 import Data.NetCDF.Store
 
 import qualified Numeric.Container as C
+import qualified Numeric.LinearAlgebra.Util as C
 import Foreign.C
 import Data.Packed.Foreign
+import Data.Packed.Vector
 import Data.Packed.Development
 
 newtype HVector a = HVector (C.Vector a)
@@ -51,3 +53,6 @@ instance C.Element CDouble
 
 instance C.Container C.Vector CFloat
 instance C.Container C.Vector CDouble
+
+instance C.Indexable (C.Vector CFloat) CFloat where (!) = (@>)
+instance C.Indexable (C.Vector CDouble) CDouble where (!) = (@>)
