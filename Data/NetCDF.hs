@@ -1,4 +1,4 @@
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE ScopedTypeVariables, ConstraintKinds #-}
 -- | Bindings to the Unidata NetCDF data access library.
 --
 --   As well as conventional low-level FFI bindings to the functions
@@ -130,7 +130,8 @@ get1 nc var idxs = runAccess "get1" (ncName nc) $
   chk $ get_var1 (ncId nc) ((ncVarIds nc) M.! (ncVarName var)) idxs
 
 -- | Read a whole variable from an open NetCDF file.
-get :: (NcStorable a, NcStore s) => NcInfo NcRead -> NcVar -> NcIO (s a)
+get :: (NcStorable a, NcStore s, NcStoreExtraCon s a) =>
+       NcInfo NcRead -> NcVar -> NcIO (s a)
 get nc var = runAccess "get" (ncName nc) $ do
   let ncid = ncId nc
       varid = (ncVarIds nc) M.! (ncVarName var)
@@ -138,7 +139,7 @@ get nc var = runAccess "get" (ncName nc) $ do
   chk $ get_var ncid varid sz
 
 -- | Read a slice of a variable from an open NetCDF file.
-getA :: (NcStorable a, NcStore s)
+getA :: (NcStorable a, NcStore s, NcStoreExtraCon s a)
      => NcInfo NcRead -> NcVar -> [Int] -> [Int] -> NcIO (s a)
 getA nc var start count = runAccess "getA" (ncName nc) $ do
   let ncid = ncId nc
@@ -146,7 +147,7 @@ getA nc var start count = runAccess "getA" (ncName nc) $ do
   chk $ get_vara ncid varid start count
 
 -- | Read a strided slice of a variable from an open NetCDF file.
-getS :: (NcStorable a, NcStore s)
+getS :: (NcStorable a, NcStore s, NcStoreExtraCon s a)
      => NcInfo NcRead -> NcVar -> [Int] -> [Int] -> [Int] -> NcIO (s a)
 getS nc var start count stride = runAccess "getS" (ncName nc) $ do
   let ncid = ncId nc
@@ -160,14 +161,15 @@ put1 nc var idxs val = runAccess "put1" (ncName nc) $
   chk $ put_var1 (ncId nc) ((ncVarIds nc) M.! (ncVarName var)) idxs val
 
 -- | Write a whole variable to an open NetCDF file.
-put :: (NcStorable a, NcStore s) => NcInfo NcWrite -> NcVar -> s a -> NcIO ()
+put :: (NcStorable a, NcStore s, NcStoreExtraCon s a) =>
+       NcInfo NcWrite -> NcVar -> s a -> NcIO ()
 put nc var val = runAccess "put" (ncName nc) $ do
   let ncid = ncId nc
       varid = (ncVarIds nc) M.! (ncVarName var)
   chk $ put_var ncid varid val
 
 -- | Write a slice of a variable to an open NetCDF file.
-putA :: (NcStorable a, NcStore s)
+putA :: (NcStorable a, NcStore s, NcStoreExtraCon s a)
      => NcInfo NcWrite -> NcVar -> [Int] -> [Int] -> s a -> NcIO ()
 putA nc var start count val = runAccess "putA" (ncName nc) $ do
   let ncid = ncId nc
@@ -175,7 +177,7 @@ putA nc var start count val = runAccess "putA" (ncName nc) $ do
   chk $ put_vara ncid varid start count val
 
 -- | Write a strided slice of a variable to an open NetCDF file.
-putS :: (NcStorable a, NcStore s)
+putS :: (NcStorable a, NcStore s, NcStoreExtraCon s a)
      => NcInfo NcWrite -> NcVar -> [Int] -> [Int] -> [Int] -> s a -> NcIO ()
 putS nc var start count stride val = runAccess "putS" (ncName nc) $ do
   let ncid = ncId nc
@@ -264,7 +266,8 @@ writeAttr' nc var n t conv vs wf = chk $ wf nc var n (fromEnum t) (map conv vs)
 
 -- | Apply COARDS value scaling.
 coardsScale :: forall a b s. (NcStorable a, NcStorable b, FromNcAttr a,
-                              NcStore s, Real a, Fractional b)
+                              NcStore s, Real a, Fractional b,
+                              NcStoreExtraCon s a, NcStoreExtraCon s b)
              => NcVar -> s a -> s b
 coardsScale v din = smap xform din
   where offset = fromMaybe 0.0 $

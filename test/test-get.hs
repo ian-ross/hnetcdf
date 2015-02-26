@@ -78,7 +78,7 @@ type SVRet a = IO (Either NcError (SV.Vector a))
 type RepaRet3 a = IO (Either NcError (R.Array F R.DIM3 a))
 type RepaRet1 a = IO (Either NcError (R.Array F R.DIM1 a))
 type HMVRet a = IO (Either NcError (H.HVector a))
-type HMMRet a = IO (Either NcError (H.HRowMajorMatrix a))
+type HMMRet a = IO (Either NcError (H.HMatrix a))
 
 
 --------------------------------------------------------------------------------
@@ -165,7 +165,7 @@ getVarRepa f v _ = do
             (and $ zipWith (==) tstvals truevals)
   void $ closeFile nc
 
-getVarHMV :: forall a. (Eq a, Num a, Show a, NcStorable a)
+getVarHMV :: forall a. (Eq a, Num a, Show a, NcStorable a, Element a)
           => FilePath -> String -> a -> Assertion
 getVarHMV f v _ = do
   enc <- openFile f
@@ -291,7 +291,7 @@ getVarARepa f v _ = do
               assertBool ("3: value error: " ++ show tstvals ++
                           " instead of " ++ show truevals) (tstvals == truevals)
 
-getVarAHMV :: forall a. (Num a, Show a, Eq a, NcStorable a)
+getVarAHMV :: forall a. (Num a, Show a, Eq a, NcStorable a, Element a)
            => FilePath -> String -> a -> Assertion
 getVarAHMV f v _ = do
   enc <- openFile f
@@ -466,7 +466,7 @@ getVarSRepa f v _ = do
                             " instead of " ++ show truevals)
                   (tstvals == truevals)
 
-getVarSHMV :: forall a. (Num a, Show a, Eq a, NcStorable a)
+getVarSHMV :: forall a. (Num a, Show a, Eq a, NcStorable a, Element a)
           => FilePath -> String -> a -> Assertion
 getVarSHMV f v _ = do
   enc <- openFile f

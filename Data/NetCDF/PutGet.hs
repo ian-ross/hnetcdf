@@ -1,3 +1,4 @@
+{-# LANGUAGE ConstraintKinds #-}
 -- | Mid-level interface for reading and writing NetCDF data.  The
 -- functions in "Data.NetCDF" provide a more convenient interface.
 
@@ -38,14 +39,16 @@ get_var1 nc var idxs = do
       v <- peek iv
       return $ (fromIntegral res, v)
 
-put_var :: (NcStorable a, NcStore s) => Int -> Int -> s a -> IO Int
+put_var :: (NcStorable a, NcStore s, NcStoreExtraCon s a) =>
+           Int -> Int -> s a -> IO Int
 put_var nc var v = do
   let ncid = fromIntegral nc
       varid = fromIntegral var
       is = toForeignPtr v
   withForeignPtr is $ \isp -> fromIntegral <$> ffi_put_var ncid varid isp
 
-get_var :: (NcStorable a, NcStore s) => Int -> Int -> [Int] -> IO (Int, s a)
+get_var :: (NcStorable a, NcStore s, NcStoreExtraCon s a) =>
+           Int -> Int -> [Int] -> IO (Int, s a)
 get_var nc var sz = do
   let ncid = fromIntegral nc
       varid = fromIntegral var
@@ -54,7 +57,7 @@ get_var nc var sz = do
     res <- ffi_get_var ncid varid isp
     return (fromIntegral res, fromForeignPtr is sz)
 
-put_vara :: (NcStorable a, NcStore s) =>
+put_vara :: (NcStorable a, NcStore s, NcStoreExtraCon s a) =>
             Int -> Int -> [Int] -> [Int] -> s a -> IO Int
 put_vara nc var start count v = do
   let ncid = fromIntegral nc
@@ -66,7 +69,7 @@ put_vara nc var start count v = do
         res <- ffi_put_vara ncid varid startp countp isp
         return $ fromIntegral res
 
-get_vara :: (NcStorable a, NcStore s)
+get_vara :: (NcStorable a, NcStore s, NcStoreExtraCon s a)
          => Int -> Int -> [Int] -> [Int] -> IO (Int, s a)
 get_vara nc var start count = do
   let ncid = fromIntegral nc
@@ -78,7 +81,7 @@ get_vara nc var start count = do
         res <- ffi_get_vara ncid varid s c isp
         return (fromIntegral res, fromForeignPtr is (filter (>1) count))
 
-put_vars :: (NcStorable a, NcStore s) =>
+put_vars :: (NcStorable a, NcStore s, NcStoreExtraCon s a) =>
             Int -> Int -> [Int] -> [Int] -> [Int] -> s a -> IO Int
 put_vars nc var start count stride v = do
   let ncid = fromIntegral nc
@@ -91,7 +94,7 @@ put_vars nc var start count stride v = do
           res <- ffi_put_vars ncid varid startp countp stridep isp
           return $ fromIntegral res
 
-get_vars :: (NcStorable a, NcStore s)
+get_vars :: (NcStorable a, NcStore s, NcStoreExtraCon s a)
          => Int -> Int -> [Int] -> [Int] -> [Int] -> IO (Int, s a)
 get_vars nc var start count stride = do
   let ncid = fromIntegral nc

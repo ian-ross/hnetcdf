@@ -10,7 +10,7 @@ import Foreign.Storable
 import Numeric.Container
 
 type VRet a = IO (Either NcError (HVector a))
-type MRet a = IO (Either NcError (HRowMajorMatrix a))
+type MRet a = IO (Either NcError (HMatrix a))
 
 main :: IO ()
 main = do
@@ -53,9 +53,9 @@ main = do
   -- scaling, convert units.
   let (Just zvar) = ncVar nc "z500"
   putStrLn $ "z500 dims: " ++ show (map ncDimName $ ncVarDims zvar)
-  Right slice1tmp <- getA nc zvar [0, 0, 0] [1, nlat, nlon] :: MRet CShort
-  let (HRowMajorMatrix slice1tmp2) =
-        coardsScale zvar slice1tmp :: HRowMajorMatrix CDouble
+  Right slice1tmp <-
+    getA nc zvar [0, 0, 0] [1, nlat, nlon] :: MRet CShort
+  let (HMatrix slice1tmp2) = coardsScale zvar slice1tmp :: HMatrix CDouble
       slice1 = cmap ((/ 9.8) . realToFrac) slice1tmp2 :: Matrix Double
   putStrLn $ "size slice1 = " ++
     show (rows slice1) ++ " x " ++ show (cols slice1)

@@ -19,7 +19,7 @@ import Data.NetCDF
 import Data.NetCDF.Vector
 import Data.NetCDF.HMatrix
 
-type HMatrixRet a = IO (Either NcError (HRowMajorMatrix a))
+type HMatrixRet a = IO (Either NcError (HMatrix a))
 
 main :: IO ()
 main = defaultMain tests
@@ -51,15 +51,15 @@ hmatrixDataOrdering = do
             z2var = fromJust $ ncVar nc "z2"
         put nc xvar $ SV.fromList [1..5 :: CDouble]
         put nc yvar $ SV.fromList [1..10 :: CDouble]
-        put nc z1var $ HRowMajorMatrix z1
-        put nc z2var $ HRowMajorMatrix z2
+        put nc z1var $ HMatrix z1
+        put nc z2var $ HMatrix z2
         return ()
   withCreateFile ncout write (putStrLn . ("ERROR: " ++) . show)
   let read nc = do
         let z1var = fromJust $ ncVar nc "z1"
             z2var = fromJust $ ncVar nc "z2"
-        Right (HRowMajorMatrix z1) <- get nc z1var :: HMatrixRet CDouble
-        Right (HRowMajorMatrix z2) <- get nc z2var :: HMatrixRet CDouble
+        Right (HMatrix z1) <- get nc z1var :: HMatrixRet CDouble
+        Right (HMatrix z2) <- get nc z2var :: HMatrixRet CDouble
         return (z1, z2)
   (z1tst, z2tst) <-
     withReadFile "tst-hmatrix.nc" read (error . ("ERROR: " ++) . show)
