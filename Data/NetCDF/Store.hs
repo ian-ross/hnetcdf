@@ -17,6 +17,7 @@ import GHC.Exts
 -- elements needed for some store types.
 class NcStore s where
   type NcStoreExtraCon s a :: Constraint
+  type NcStoreExtraCon s a = ()
   toForeignPtr :: (Storable e, NcStoreExtraCon s e) =>
                   s e -> ForeignPtr e
   fromForeignPtr :: (Storable e, NcStoreExtraCon s e) =>

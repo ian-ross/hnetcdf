@@ -11,7 +11,6 @@ import qualified Data.Array.Repa.Repr.ForeignPtr as RF
 import Data.Array.Repa.Repr.ForeignPtr (F)
 
 instance Shape sh => NcStore (Array F sh) where
-  type NcStoreExtraCon (Array F sh) a = ()
   toForeignPtr = RF.toForeignPtr
   fromForeignPtr p s = RF.fromForeignPtr (shapeOfList $ reverse s) p
   smap f s = computeS $ R.map f s
