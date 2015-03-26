@@ -13,6 +13,7 @@ before_install:
 
 install:
  - cabal update
+ - cabal install alex happy
  - cabal install --only-dependencies --enable-tests --reorder-goals
  - cabal install c2hs
 
