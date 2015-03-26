@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, ConstraintKinds, TypeFamilies #-}
+{-# LANGUAGE ConstraintKinds, TypeFamilies #-}
 -- | The /store polymorphism/ for the functions to get the values of
 -- NetCDF variables relies on a simple `NcStore` typeclass for
 -- converting between /store/ values and @ForeignPtr@s.

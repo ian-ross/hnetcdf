@@ -1,5 +1,5 @@
 {-# LANGUAGE FlexibleInstances, ConstraintKinds, TypeFamilies #-}
-{-# LANGUAGE MultiParamTypeClasses, ScopedTypeVariables, GADTs #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# OPTIONS_GHC -fno-warn-orphans -fwarn-missing-methods #-}
 -- | NetCDF store instance for HMatrix vectors and matrices.
 module Data.NetCDF.HMatrix
