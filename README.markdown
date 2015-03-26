@@ -1,6 +1,8 @@
 hnetcdf
 =======
 
+[![Build Status](https://travis-ci.org/ian-ross/hnetcdf.svg?branch=master)](https://travis-ci.org/ian-ross/hnetcdf)
+
 Haskell NetCDF library: as well as conventional low-level FFI bindings
 to the functions in the NetCDF library (in the `Data.NetCDF.Raw`
 modules), `hnetcdf` provides a higher-level Haskell interface
