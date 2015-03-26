@@ -33,7 +33,7 @@ library
         errors >=1.4.7 && <1.5,
         filepath >=1.3.0.2 && <1.4,
         hmatrix >=0.16.1.5 && <0.17,
-        repa >=3.3.1.2 && <3.4,
+        repa >=3.2.3.1 && <3.4,
         transformers >=0.3.0.0 && <0.5,
         vector >=0.10.12.2 && <0.11
     exposed-modules:
@@ -72,7 +72,7 @@ executable example2
         base >=4.3 && <5,
         containers >=0.5.5.1 && <0.6,
         vector >=0.10.12.2 && <0.11,
-        repa >=3.3.1.2 && <3.4
+        repa >=3.2.3.1 && <3.4
     main-is: example2.hs
     hs-source-dirs: examples
 
@@ -92,7 +92,7 @@ test-suite test-raw-metadata
         base >=4.3 && <5,
         containers >=0.5.5.1 && <0.6,
         vector >=0.10.12.2 && <0.11,
-        repa >=3.3.1.2 && <3.4,
+        repa >=3.2.3.1 && <3.4,
         test-framework >=0.3,
         test-framework-hunit -any,
         test-framework-quickcheck2 >=0.3,
@@ -109,7 +109,7 @@ test-suite test-raw-get-put
         base >=4.3 && <5,
         containers >=0.5.5.1 && <0.6,
         vector >=0.10.12.2 && <0.11,
-        repa >=3.3.1.2 && <3.4,
+        repa >=3.2.3.1 && <3.4,
         directory >=1.1,
         test-framework >=0.3,
         test-framework-hunit -any,
@@ -127,7 +127,7 @@ test-suite test-raw-attributes
         base >=4.3 && <5,
         containers >=0.5.5.1 && <0.6,
         vector >=0.10.12.2 && <0.11,
-        repa >=3.3.1.2 && <3.4,
+        repa >=3.2.3.1 && <3.4,
         directory >=1.1,
         test-framework >=0.3,
         test-framework-hunit -any,
@@ -146,7 +146,7 @@ test-suite test-get
         containers >=0.5.5.1 && <0.6,
         errors >=1.4.7 && <1.5,
         hmatrix >=0.16.1.5 && <0.17,
-        repa >=3.3.1.2 && <3.4,
+        repa >=3.2.3.1 && <3.4,
         vector >=0.10.12.2 && <0.11,
         directory >=1.1,
         test-framework >=0.3,
