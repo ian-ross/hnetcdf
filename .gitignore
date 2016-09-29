@@ -1,6 +1,7 @@
 dist
 cabal-dev
 *.o
+*.swp
 *.hi
 *.chi
 *.chs.h
@@ -13,3 +14,4 @@ cabal-dev
 /examples/example1
 /examples/example2
 /examples/example3
+/.stack-work/*

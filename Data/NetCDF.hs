@@ -237,7 +237,7 @@ readAttr nc var n NcDouble l =
   readAttr' nc var n l NcAttrDouble nc_get_att_double
 
 -- | Helper function for attribute reading.
-readAttr' :: Show a => Int -> Int -> String -> Int -> ([a] -> NcAttr)
+readAttr' :: Int -> Int -> String -> Int -> ([a] -> NcAttr)
           -> (Int -> Int -> String -> Int -> IO (Int, [a])) -> Access NcAttr
 readAttr' nc var n l w rf = chk $ do
   tmp <- rf nc var n l
