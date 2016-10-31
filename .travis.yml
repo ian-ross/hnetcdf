@@ -1,13 +1,14 @@
 env:
  - GHCVER=7.6.3
  - GHCVER=7.8.4
+ - GHCVER=8.0.1
 
 before_install:
  - travis_retry sudo add-apt-repository -y ppa:hvr/ghc
  - travis_retry sudo apt-get update
  - travis_retry sudo apt-get install libnetcdf-dev libgsl0-dev liblapack-dev
- - travis_retry sudo apt-get install cabal-install-1.22 ghc-$GHCVER-prof ghc-$GHCVER-dyn happy
- - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/1.22/bin:$PATH
+ - travis_retry sudo apt-get install cabal-install-1.24 ghc-$GHCVER-prof ghc-$GHCVER-dyn happy
+ - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/1.24/bin:$PATH
 
 install:
  - cabal update
@@ -15,6 +16,9 @@ install:
    if [ $GHCVER = "head" ] || [ ${GHCVER%.*} = "7.8" ] || [ ${GHCVER%.*} = "7.10" ]; then
      travis_retry sudo apt-get install happy-1.19.4 alex-3.1.3
      export PATH=/opt/alex/3.1.3/bin:/opt/happy/1.19.4/bin:$PATH
+   elif [ ${GHCVER%.*} = "8.0" ]; then
+     travis_retry sudo apt-get install happy-1.19.5 alex-3.1.7
+     export PATH=/opt/alex/3.1.7/bin:/opt/happy/1.19.5/bin:$PATH
    else
      travis_retry sudo apt-get install happy alex
    fi

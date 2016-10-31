@@ -2,7 +2,7 @@
 -------
 * Update to work with hmatrix 0.17 -- `CFloat` and `CDouble` are not longer supported
   in hmatrix-0.17. It is possible to use hmatrix by converting `CFloat/CDouble` to
-  `Float/Double` using `smap realToFrac` (see examples/example3.hs).
+  `Float/Double` using `smap realToFrac` (see examples/example3.hs and test/test-get.hs).
 
 0.3.0.0
 -------
