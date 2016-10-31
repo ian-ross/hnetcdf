@@ -17,10 +17,9 @@ import Data.NetCDF.Raw.Utils
 -- int nc_put_att_text(int ncid, int varid, const char *name,
 --                     size_t len, const char *op);
 nc_put_att_text :: Int -> Int -> String -> Int -> String -> IO Int
-nc_put_att_text nc var name xtype v = do
+nc_put_att_text nc var name _ v = do
   let ncid = fromIntegral nc
       varid = fromIntegral var
-      ncxtype = fromIntegral xtype
       ncsize = fromIntegral $ length v
   let tv = map convChar v
   withCString name $ \namep -> do
@@ -34,7 +33,7 @@ foreign import ccall safe "Data/NetCDF/Raw.chs.h nc_put_att_text"
   nc_put_att_text'_ :: CInt -> CInt -> CString -> CULong
                      -> Ptr CChar -> IO CInt
 
-nc_put_att :: (Storable a, Storable b, Show b) =>
+nc_put_att :: (Storable b) =>
               (CInt -> CInt -> CString -> CInt -> CULong -> Ptr b -> IO CInt)
             -> (a -> b) -> Int -> Int -> String -> Int -> [a] -> IO Int
 nc_put_att cfn conv nc var name xtype v = do
@@ -171,7 +170,7 @@ foreign import ccall safe "Data/NetCDF/Raw.chs.h nc_put_att_ulonglong"
 {#fun nc_del_att { `Int', `Int', `String' } -> `Int' #}
 
 
-nc_get_att :: (Storable a, Storable b) =>
+nc_get_att :: (Storable a) =>
               (CInt -> CInt -> CString -> Ptr a -> IO CInt)
             -> (a -> b) -> Int -> Int -> String -> Int -> IO (Int, [b])
 nc_get_att cfn conv nc var name cnt = do

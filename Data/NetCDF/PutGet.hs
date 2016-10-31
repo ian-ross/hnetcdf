@@ -109,5 +109,5 @@ get_vars nc var start count stride = do
 
 -- | Helper function for dealing with size (start, count, stride)
 -- arrays.
-withSizeArray :: (Storable a, Integral a) => [a] -> (Ptr CULong -> IO b) -> IO b
+withSizeArray :: (Integral a) => [a] -> (Ptr CULong -> IO b) -> IO b
 withSizeArray = withArray . liftM fromIntegral
