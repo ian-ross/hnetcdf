@@ -55,7 +55,7 @@ main = do
   Right slice1tmp <- getA nc zvar [0, 0, 0] [1, nlat, nlon] :: SVRet CShort
   let slice1 = SV.map (/ 9.8) $ coardsScale zvar slice1tmp :: SV.Vector CDouble
   putStrLn $ "length slice1 = " ++ show (length slice1)
-  let idx i j = (nlat - i) * nlon + (j - 1)
+  let idx i j = (nlat - j) * nlon + (i - 1)
   putStrLn $ "lon(i=25) = " ++ show (lon SV.! (25 - 1))
   putStrLn $ "lat(j=40) = " ++ show (lat SV.! (nlat - 40))
   putStrLn $ "slice1(i=25,j=40) = " ++ show (slice1 SV.! idx 25 40)
