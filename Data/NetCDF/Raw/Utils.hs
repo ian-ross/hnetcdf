@@ -4,14 +4,20 @@
 
 module Data.NetCDF.Raw.Utils
        ( module Data.NetCDF.Raw.Utils
-       , module Foreign
        , module Foreign.C
+       , module Foreign.Ptr
+       , module Foreign.Storable
+       , module Foreign.Marshal.Array
+       , module Foreign.Marshal.Alloc
        , unsafePerformIO
        ) where
 
 import Control.Monad (liftM)
-import Foreign hiding (unsafePerformIO)
 import Foreign.C
+import Foreign.Ptr
+import Foreign.Storable
+import Foreign.Marshal.Array
+import Foreign.Marshal.Alloc
 import System.IO.Unsafe (unsafePerformIO)
 
 ncMaxName, ncMaxDims, ncMaxVars, ncMaxAttrs, ncMaxVarDims :: Int
@@ -30,17 +36,17 @@ peekIntConv = liftM fromIntegral . peek
 peekFloatConv :: (Storable a, RealFloat a, RealFloat b) => Ptr a -> IO b
 peekFloatConv = liftM realToFrac . peek
 
-withIntArray :: (Storable a, Integral a) => [a] -> (Ptr CInt -> IO b) -> IO b
+withIntArray :: Integral a => [a] -> (Ptr CInt -> IO b) -> IO b
 withIntArray = withArray . liftM fromIntegral
 
-withIntPtrConv :: (Storable a, Storable b, Integral a, Integral b)
+withIntPtrConv :: (Storable b, Integral a, Integral b)
                   => a -> (Ptr b -> IO c) -> IO c
 withIntPtrConv val f =
   alloca $ \ptr -> do
     poke ptr (fromIntegral val)
     f ptr
 
-withFloatPtrConv :: (Storable a, Storable b, RealFloat a, RealFloat b)
+withFloatPtrConv :: (Storable b, RealFloat a, RealFloat b)
                     => a -> (Ptr b -> IO c) -> IO c
 withFloatPtrConv val f =
   alloca $ \ptr -> do

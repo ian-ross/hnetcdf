@@ -28,19 +28,17 @@ source-repository head
 library
     build-depends:
         base >=4.3 && <5,
-        containers >=0.5.0.0 && <0.6,
-        either >=4.3.3.2 && <4.4,
-        errors >=1.4.7 && <1.5,
-        filepath >=1.3.0.2 && <1.4,
-        hmatrix >=0.16.1.5 && <0.17,
-        repa >=3.2.3.1 && <3.4,
-        transformers >=0.3.0.0 && <0.5,
-        vector >=0.10.12.2 && <0.11
+        containers,
+        either,
+        errors,
+        filepath,
+        repa,
+        transformers,
+        vector
     exposed-modules:
         Data.NetCDF
         Data.NetCDF.Vector
         Data.NetCDF.Repa
-        Data.NetCDF.HMatrix
         Data.NetCDF.Metadata
         Data.NetCDF.PutGet
         Data.NetCDF.Storable
@@ -61,8 +59,8 @@ executable example1
     build-depends:
         hnetcdf -any,
         base >=4.3 && <5,
-        containers >=0.5.0.0 && <0.6,
-        vector >=0.10.12.2 && <0.11
+        containers,
+        vector
     main-is: example1.hs
     hs-source-dirs: examples
 
@@ -70,34 +68,24 @@ executable example2
     build-depends:
         hnetcdf -any,
         base >=4.3 && <5,
-        containers >=0.5.0.0 && <0.6,
-        vector >=0.10.12.2 && <0.11,
-        repa >=3.2.3.1 && <3.4
+        containers,
+        vector,
+        repa
     main-is: example2.hs
-    hs-source-dirs: examples
-
-executable example3
-    build-depends:
-        hnetcdf -any,
-        base >=4.3 && <5,
-        containers >=0.5.0.0 && <0.6,
-        vector >=0.10.12.2 && <0.11,
-        hmatrix >=0.16.1.5 && <0.17
-    main-is: example3.hs
     hs-source-dirs: examples
 
 test-suite test-raw-metadata
     build-depends:
         hnetcdf -any,
         base >=4.3 && <5,
-        containers >=0.5.0.0 && <0.6,
-        vector >=0.10.12.2 && <0.11,
-        repa >=3.2.3.1 && <3.4,
-        test-framework >=0.3,
-        test-framework-hunit -any,
-        test-framework-quickcheck2 >=0.3,
-        HUnit -any,
-        QuickCheck >=2.6 && <2.8
+        containers,
+        vector,
+        repa,
+        test-framework,
+        test-framework-hunit,
+        test-framework-quickcheck2,
+        HUnit,
+        QuickCheck
     type: exitcode-stdio-1.0
     main-is: test-raw-metadata.hs
     extra-libraries:
@@ -107,15 +95,15 @@ test-suite test-raw-get-put
     build-depends:
         hnetcdf -any,
         base >=4.3 && <5,
-        containers >=0.5.0.0 && <0.6,
-        vector >=0.10.12.2 && <0.11,
-        repa >=3.2.3.1 && <3.4,
-        directory >=1.1,
-        test-framework >=0.3,
-        test-framework-hunit -any,
-        test-framework-quickcheck2 >=0.3,
-        HUnit -any,
-        QuickCheck >=2.6 && <2.8
+        containers,
+        vector,
+        repa,
+        directory,
+        test-framework,
+        test-framework-hunit,
+        test-framework-quickcheck2,
+        HUnit,
+        QuickCheck
     type: exitcode-stdio-1.0
     main-is: test-raw-get-put.hs
     extra-libraries:
@@ -125,15 +113,15 @@ test-suite test-raw-attributes
     build-depends:
         hnetcdf -any,
         base >=4.3 && <5,
-        containers >=0.5.0.0 && <0.6,
-        vector >=0.10.12.2 && <0.11,
-        repa >=3.2.3.1 && <3.4,
-        directory >=1.1,
-        test-framework >=0.3,
-        test-framework-hunit -any,
-        test-framework-quickcheck2 >=0.3,
-        HUnit -any,
-        QuickCheck >=2.6 && <2.8
+        containers,
+        vector,
+        repa,
+        directory,
+        test-framework,
+        test-framework-hunit,
+        test-framework-quickcheck2,
+        HUnit,
+        QuickCheck
     type: exitcode-stdio-1.0
     main-is: test-raw-attributes.hs
     extra-libraries:
@@ -143,17 +131,16 @@ test-suite test-get
     build-depends:
         hnetcdf -any,
         base >=4.3 && <5,
-        containers >=0.5.0.0 && <0.6,
-        errors >=1.4.7 && <1.5,
-        hmatrix >=0.16.1.5 && <0.17,
-        repa >=3.2.3.1 && <3.4,
-        vector >=0.10.12.2 && <0.11,
-        directory >=1.1,
-        test-framework >=0.3,
-        test-framework-hunit -any,
-        test-framework-quickcheck2 >=0.3,
-        HUnit -any,
-        QuickCheck >=2.6 && <2.8
+        containers,
+        errors,
+        repa,
+        vector,
+        directory,
+        test-framework,
+        test-framework-hunit,
+        test-framework-quickcheck2,
+        HUnit,
+        QuickCheck
     type: exitcode-stdio-1.0
     main-is: test-get.hs
     extra-libraries:
@@ -163,31 +150,12 @@ test-suite test-put
     build-depends:
         hnetcdf -any,
         base >=4.3 && <5,
-        containers >=0.5.0.0 && <0.6,
-        errors >=1.4.7 && <1.5,
-        vector >=0.10.12.2 && <0.11,
-        directory >=1.1
+        containers,
+        errors,
+        vector,
+        directory
     type: exitcode-stdio-1.0
     main-is: test-put.hs
-    extra-libraries:
-        netcdf
-    hs-source-dirs: test
-test-suite test-hmatrix
-    build-depends:
-        hnetcdf -any,
-        base >=4.3 && <5,
-        containers >=0.5.0.0 && <0.6,
-        errors >=1.4.7 && <1.5,
-        vector >=0.10.12.2 && <0.11,
-        directory >=1.1,
-        hmatrix >=0.16.1.5 && <0.17,
-        test-framework >=0.3,
-        test-framework-hunit -any,
-        test-framework-quickcheck2 >=0.3,
-        HUnit -any,
-        QuickCheck >=2.6 && <2.8
-    type: exitcode-stdio-1.0
-    main-is: test-hmatrix.hs
     extra-libraries:
         netcdf
     hs-source-dirs: test
