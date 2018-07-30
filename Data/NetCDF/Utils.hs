@@ -7,17 +7,17 @@ import Data.NetCDF.Types
 import Control.Monad.Trans.Class
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Reader
-import Control.Monad.Trans.Either
+import Control.Monad.Trans.Except
 
 -- | Simple synonym to tidy up signatures.
 type NcIO a = IO (Either NcError a)
 
 -- | Monad stack to help with handling errors from FFI functions.
-type Access a = ReaderT (String, FilePath) (EitherT NcError IO) a
+type Access a = ReaderT (String, FilePath) (ExceptT NcError IO) a
 
 -- | Utility function to run access monad stack.
 runAccess :: String -> String -> Access a -> NcIO a
-runAccess f p = runEitherT . flip runReaderT (f, p)
+runAccess f p = runExceptT . flip runReaderT (f, p)
 
 -- | Utility class to make dealing with status return from foreign
 -- NetCDF functions a little easier.
@@ -65,5 +65,5 @@ chk act = do
       val = proj res
   (f, p) <- ask
   lift $ if st == 0
-    then right val
-    else left $ NcError f st (nc_strerror st) p
+    then ExceptT (return $ Right val)
+    else ExceptT (return $ Left $ NcError f st (nc_strerror st) p)

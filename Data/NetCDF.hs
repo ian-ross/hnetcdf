@@ -62,7 +62,7 @@ import Data.NetCDF.Utils
 
 import Control.Exception (bracket)
 import Control.Monad (forM, forM_, void)
-import Control.Error
+import Data.Maybe (fromMaybe)
 import qualified Data.Map as M
 import Foreign.C
 import System.IO (IOMode (..))
