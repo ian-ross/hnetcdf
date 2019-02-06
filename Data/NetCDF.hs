@@ -50,6 +50,7 @@ module Data.NetCDF
        , withReadFile, withCreateFile
        , get1, get, getA, getS
        , put1, put, putA, putS
+       , put1_String
        , coardsScale ) where
 
 import Data.NetCDF.Raw
@@ -62,6 +63,7 @@ import Data.NetCDF.Utils
 
 import Control.Exception (bracket)
 import Control.Monad (forM, forM_, void)
+import Data.Bits ((.|.))
 import Data.Maybe (fromMaybe)
 import qualified Data.Map as M
 import Foreign.C
@@ -89,7 +91,7 @@ openFile p = runAccess "openFile" p $ do
 -- variables and attributes in the file.
 createFile :: NcInfo NcWrite -> NcIO (NcInfo NcWrite)
 createFile (NcInfo n ds vs as _ _) = runAccess "createFile" n $ do
-  ncid <- chk $ nc_create n ncClobber
+  ncid <- chk $ nc_create n (ncClobber .|. ncNetCDF4)
   newds <- forM (M.toList ds) (write1Dim ncid . snd)
   let dimids = M.fromList $ zip (M.keys ds) newds
   forM_ (M.toList as) (write1Attr ncid ncGlobal)
@@ -159,6 +161,11 @@ getS nc var start count stride = runAccess "getS" (ncName nc) $ do
 put1 :: NcStorable a => NcInfo NcWrite -> NcVar -> [Int] -> a -> NcIO ()
 put1 nc var idxs val = runAccess "put1" (ncName nc) $
   chk $ put_var1 (ncId nc) ((ncVarIds nc) M.! (ncVarName var)) idxs val
+
+-- | Write a single text value to an open NetCDF file.
+put1_String :: NcInfo NcWrite -> NcVar -> [Int] -> String -> NcIO ()
+put1_String nc var idxs val = runAccess "put1_String" (ncName nc) $
+  chk $ put_var1_String (ncId nc) ((ncVarIds nc) M.! (ncVarName var)) idxs val
 
 -- | Write a whole variable to an open NetCDF file.
 put :: (NcStorable a, NcStore s, NcStoreExtraCon s a) =>
@@ -235,6 +242,7 @@ readAttr nc var n NcInt l = readAttr' nc var n l NcAttrInt nc_get_att_int
 readAttr nc var n NcFloat l = readAttr' nc var n l NcAttrFloat nc_get_att_float
 readAttr nc var n NcDouble l =
   readAttr' nc var n l NcAttrDouble nc_get_att_double
+readAttr _ _ _ NcString _ = fail "hnetcdf.readAttr cannot yet handle attributes of type NcString"
 
 -- | Helper function for attribute reading.
 readAttr' :: Int -> Int -> String -> Int -> ([a] -> NcAttr)

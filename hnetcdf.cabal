@@ -28,7 +28,7 @@ source-repository head
 library
     build-depends:
         base           >= 4.3     && <5,
-        containers     >= 0.5.0.0 && <0.6,
+        containers     >= 0.5.0.0 && <0.7,
         filepath       >= 1.4     && <1.5,
         repa           >= 3.4     && <3.5,
         transformers   >= 0.2     && <0.6,
@@ -83,7 +83,7 @@ test-suite test-raw-metadata
         test-framework-hunit        >= 0.3     && <0.4,
         test-framework-quickcheck2  >= 0.3     && <0.4,
         HUnit                       >= 1.6     && <1.7,
-        QuickCheck                  >= 2.10    && <2.11
+        QuickCheck                  >= 2.10    && <2.13
     type: exitcode-stdio-1.0
     main-is: test-raw-metadata.hs
     extra-libraries:
