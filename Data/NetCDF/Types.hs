@@ -15,6 +15,7 @@ data NcType = NcByte    -- ^ Signed 1 byte integer
             | NcInt     -- ^ Signed 4 byte integer
             | NcFloat   -- ^ Single precision floating point
             | NcDouble  -- ^ Double precision floating point
+            | NcString  -- ^ Strings
             deriving (Eq, Show)
 
 instance Enum NcType where
@@ -24,6 +25,7 @@ instance Enum NcType where
   fromEnum NcInt = 4
   fromEnum NcFloat = 5
   fromEnum NcDouble = 6
+  fromEnum NcString = 12
   toEnum n = case n of
     1  -> NcByte
     2  -> NcChar
@@ -31,6 +33,7 @@ instance Enum NcType where
     4  -> NcInt
     5  -> NcFloat
     6  -> NcDouble
+    12  -> NcString
     _ -> throw (NcInvalidType n)
 
 -- | Internal representation of NetCDF IDs.

@@ -5,6 +5,7 @@
 module Data.NetCDF.PutGet
        ( put_var1 , put_var, put_vara, put_vars
        , get_var1 , get_var, get_vara, get_vars
+       , put_var1_String
        ) where
 
 import Foreign.C
@@ -16,6 +17,7 @@ import Foreign.Marshal.Alloc
 import Control.Applicative ((<$>))
 import Control.Monad (liftM)
 
+import Data.NetCDF.Raw.PutGet (nc_put_var1_String)
 import Data.NetCDF.Storable
 import Data.NetCDF.Store
 
@@ -28,6 +30,13 @@ put_var1 nc var idxs v = do
     withSizeArray idxs $ \idxsp -> do
       res <- ffi_put_var1 ncid varid idxsp iv
       return $ fromIntegral res
+
+put_var1_String :: Int -> Int -> [Int] -> String -> IO Int
+put_var1_String nc var idxs v = do
+  let ncid = fromIntegral nc
+      varid = fromIntegral var
+  fmap fromIntegral $ withSizeArray idxs $ \idxsp -> do
+    nc_put_var1_String ncid varid idxsp v
 
 get_var1 :: NcStorable a => Int -> Int -> [Int] -> IO (Int, a)
 get_var1 nc var idxs = do

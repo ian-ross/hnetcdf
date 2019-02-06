@@ -10,6 +10,12 @@ import Data.NetCDF.Raw.Utils
 
 -- WRITING AND READING SINGLE DATA VALUES
 
+nc_put_var1_String :: CInt -> CInt -> Ptr CULong -> String -> IO CInt
+nc_put_var1_String ncid varid idx s =
+  withCStringPtr s $ nc_put_var1'_ ncid varid idx
+foreign import ccall safe "netcdf.h nc_put_var1"
+  nc_put_var1'_ :: CInt -> CInt -> Ptr CULong -> Ptr (Ptr CChar) -> IO CInt
+
 nc_put_var1_htext :: CInt -> CInt -> Ptr CULong -> String -> IO CInt
 nc_put_var1_htext ncid varid idx s =
   withCString s $ nc_put_var1_text'_ ncid varid idx
